@@ -9,6 +9,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import typeorm from './config/typeorm';
 import { AssignmentsModule } from './modules/assignments/assignments.module';
 import { TeacherClassesModule } from './modules/teacherClass/teacherClasses.module';
+import { SubmissionsModule } from './modules/submissions/submissions.module';
 ConfigModule.forRoot({
   isGlobal: true,
 });
@@ -29,6 +30,7 @@ ConfigModule.forRoot({
     RolesModule,
     AssignmentsModule,
     TeacherClassesModule,
+    SubmissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

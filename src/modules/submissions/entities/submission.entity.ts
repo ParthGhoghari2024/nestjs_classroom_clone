@@ -28,9 +28,6 @@ export class Submission {
   @Column({ type: 'text' })
   submission: string;
 
-  @Column({ type: 'timestamp' })
-  dateTime: Date;
-
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
