@@ -31,6 +31,14 @@ export class TeacherClassesService {
     return this.teacherClassesRepository.findOneBy({ id: id });
   }
 
+  async findByClassId(id: number): Promise<TeacherClasses> {
+    return await this.teacherClassesRepository.findOne({
+      where: {
+        classId: id,
+      },
+    });
+  }
+
   async remove(id: number): Promise<void> {
     await this.teacherClassesRepository.softDelete(id);
   }

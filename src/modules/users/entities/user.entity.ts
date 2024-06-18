@@ -40,6 +40,9 @@ export class User {
   email: string;
 
   @Column()
+  password: string;
+
+  @Column()
   roleId: number;
 
   @CreateDateColumn({ type: 'timestamp' })
@@ -61,12 +64,12 @@ export class User {
   @OneToMany(() => StudentClasses, (studentClass) => studentClass.student, {
     cascade: ['insert', 'update', 'remove', 'soft-remove'],
   })
-  studentClasses: StudentClasses;
+  studentClasses: StudentClasses[];
 
   @OneToMany(() => TeacherClasses, (teacherClass) => teacherClass.teacher, {
     cascade: ['insert', 'update', 'remove', 'soft-remove'],
   })
-  teacherClasses: TeacherClasses;
+  teacherClasses: TeacherClasses[];
 
   @OneToMany(() => Submission, (submission) => submission.student)
   submissions: Submission[];

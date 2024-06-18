@@ -8,6 +8,10 @@ import generateUniqueId from 'generate-unique-id';
 import { UsersService } from '../users/users.service';
 import { TeacherClasses } from '../teacherClass/entities/teacherClass.entity';
 import { StudentClasses } from '../studentClass/entities/studentClass.entity';
+import { createTeacherAddToClass } from './dto/createTeacherAddToClass.dto';
+import { AuthService } from '../auth/auth.service';
+import { registerDto } from '../auth/dto/register.dto';
+import { TeacherClassesService } from '../teacherClass/teacherClasses.service';
 @Injectable()
 export class ClassesService {
   constructor(
@@ -15,6 +19,9 @@ export class ClassesService {
     private readonly classesRepository: Repository<Class>,
 
     private readonly userRepository: UsersService,
+    private readonly authRepository: AuthService,
+
+    private readonly teacherClassesRepository: TeacherClassesService,
   ) {}
 
   private readonly logger = new Logger(ClassesService.name);
@@ -193,6 +200,43 @@ export class ClassesService {
       classResult.students.push(studentClass);
 
       return await this.classesRepository.save(classResult);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async createTeacherAddToClass(
+    createTeacherAddToClass: createTeacherAddToClass,
+  ) {
+    try {
+      const registerObj: registerDto = {
+        username: createTeacherAddToClass.username,
+        password: createTeacherAddToClass.password,
+        confirmPassword: createTeacherAddToClass.confirmPassword,
+        email: createTeacherAddToClass.email,
+      };
+      const newTeacher = await this.authRepository.register(registerObj);
+
+      console.log(newTeacher);
+
+      const classEntity = await this.teacherClassesRepository.findByClassId(
+        createTeacherAddToClass.classId,
+      );
+
+      classEntity.teacher = newTeacher;
+
+      // const classes: TeacherClasses[] = [];
+
+      // await Promise.all(
+      //   createTeacherAddToClass.classIds.map(async (id) => {
+      //     const classData = await this.classesRepository.findOne({
+      //       where: {
+      //         id,
+      //       },
+      //     });
+      //     classes.push(classData);
+      //   }),
+      // );
     } catch (error) {
       this.logger.error(error);
     }
