@@ -13,6 +13,8 @@ import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
+import { Submission } from './entities/submission.entity';
+import { UpdateResult } from 'typeorm';
 
 @Controller('submissions')
 export class SubmissionsController {
@@ -24,7 +26,7 @@ export class SubmissionsController {
   async create(@Body() createSubmissionDto: CreateSubmissionDto, @Res() res) {
     try {
       const studentId: number = 1; //TODO:
-      const createResult = await this.submissionsService.create(
+      const createResult: Submission = await this.submissionsService.create(
         createSubmissionDto,
         studentId,
       );
@@ -46,25 +48,64 @@ export class SubmissionsController {
   }
 
   @Get()
-  findAll() {
-    return this.submissionsService.findAll();
+  async findAll() {
+    return await this.submissionsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.submissionsService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return await this.submissionsService.findOne(+id);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateSubmissionDto: UpdateSubmissionDto,
   ) {
-    return this.submissionsService.update(+id, updateSubmissionDto);
+    return await this.submissionsService.update(+id, updateSubmissionDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.submissionsService.remove(+id);
+  async remove(@Param('id') id: string, @Res() res) {
+    try {
+      const removeResult: UpdateResult =
+        await this.submissionsService.remove(+id);
+
+      if (removeResult) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
+  }
+
+  @Post('/restore/:id')
+  async restore(@Param('id') id: string, @Res() res) {
+    try {
+      const restoreResult: UpdateResult =
+        await this.submissionsService.restore(+id);
+
+      if (restoreResult) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 }

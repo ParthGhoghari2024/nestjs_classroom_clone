@@ -9,16 +9,26 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity({ name: 'users' })
+@Index(['email'], {
+  unique: true,
+  where: 'deletedAt is null',
+})
+@Index(['username'], {
+  unique: true,
+  where: 'deletedAt is null',
+})
 export class User {
   @PrimaryGeneratedColumn()
   id: number;

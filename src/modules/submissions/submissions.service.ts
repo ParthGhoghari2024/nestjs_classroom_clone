@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,8 +11,10 @@ export class SubmissionsService {
     @InjectRepository(Submission)
     private readonly submissionRepository: Repository<Submission>,
   ) {}
+
+  private readonly logger: Logger = new Logger(SubmissionsService.name);
   async create(createSubmissionDto: CreateSubmissionDto, studentId: number) {
-    const newSubmission = new Submission();
+    const newSubmission: Submission = new Submission();
     newSubmission.classId = createSubmissionDto.classId;
     newSubmission.studentId = studentId;
     newSubmission.submission = createSubmissionDto.submission;
@@ -59,11 +61,23 @@ export class SubmissionsService {
     });
   }
 
-  update(id: number, updateSubmissionDto: UpdateSubmissionDto) {
+  async update(id: number, updateSubmissionDto: UpdateSubmissionDto) {
     return `This action updates a #${id} submission`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} submission`;
+  async remove(id: number) {
+    try {
+      return await this.submissionRepository.softDelete(id);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async restore(id: number) {
+    try {
+      return await this.submissionRepository.restore(id);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }
