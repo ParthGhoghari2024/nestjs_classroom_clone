@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { Class } from './entities/class.entity';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import generateUniqueId from 'generate-unique-id';
 import { UsersService } from '../users/users.service';
 import { TeacherClasses } from '../teacherClass/entities/teacherClass.entity';
+import { StudentClasses } from '../studentClass/entities/studentClass.entity';
 @Injectable()
 export class ClassesService {
   constructor(
@@ -15,90 +16,116 @@ export class ClassesService {
 
     private readonly userRepository: UsersService,
   ) {}
+
+  private readonly logger = new Logger(ClassesService.name);
   async create(createClassDto: CreateClassDto) {
-    const newClass: Class = new Class();
+    try {
+      const newClass: Class = new Class();
 
-    const UId: string = generateUniqueId({
-      length: 6,
-    });
-    newClass.name = createClassDto.name;
-    newClass.UId = UId;
+      const UId: string = generateUniqueId({
+        length: 6,
+      });
+      newClass.name = createClassDto.name;
+      newClass.UId = UId;
 
-    return this.classesRepository.save(newClass);
+      return this.classesRepository.save(newClass);
+    } catch (error) {
+      this.logger.error(error);
+      return null;
+    }
   }
 
   async findAll(): Promise<Class[]> {
-    return this.classesRepository.find({
-      select: {
-        id: true,
-        UId: true,
-        name: true,
-        // students: {
-        //   id: true,
-        //   username: true,
-        //   email: true,
-        // },
-        teachers: true,
-        assignments: {
-          title: true,
-          descrption: true,
-          dueDate: true,
-          teacher: {
-            id: true,
-            email: true,
-            username: true,
+    try {
+      return this.classesRepository.find({
+        select: {
+          id: true,
+          UId: true,
+          name: true,
+          students: {
+            student: {
+              id: true,
+              email: true,
+              username: true,
+            },
+          },
+          teachers: true,
+          assignments: {
+            title: true,
+            descrption: true,
+            dueDate: true,
+            teacher: {
+              id: true,
+              email: true,
+              username: true,
+            },
           },
         },
-      },
-      relations: {
-        // students: true,
-        teachers: true,
-        assignments: {
-          teacher: true,
+        relations: {
+          students: true,
+          teachers: true,
+          assignments: {
+            teacher: true,
+          },
         },
-      },
-      // },
-    });
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   findOne(id: number): Promise<Class> {
-    return this.classesRepository.findOne({
-      where: {
-        id: id,
-      },
-      select: {
-        id: true,
-        UId: true,
-        name: true,
-        students: {
+    try {
+      return this.classesRepository.findOne({
+        where: {
+          id: id,
+        },
+        select: {
           id: true,
-          username: true,
-          email: true,
-        },
-        teachers: {
-          // id: true,
-          // username: true,
-          // email: true,
-        },
-        assignments: {
-          title: true,
-          descrption: true,
-          dueDate: true,
-          teacher: {
+          UId: true,
+          name: true,
+          students: {
             id: true,
-            email: true,
-            username: true,
+            student: {
+              id: true,
+              email: true,
+              username: true,
+            },
+          },
+          teachers: {
+            id: true,
+            teacher: {
+              id: true,
+              username: true,
+              email: true,
+            },
+          },
+          assignments: {
+            title: true,
+            descrption: true,
+            dueDate: true,
+            teacher: {
+              id: true,
+              email: true,
+              username: true,
+            },
           },
         },
-      },
-      relations: {
-        teachers: true,
-        students: true,
-        assignments: {
-          teacher: true,
+        relations: {
+          teachers: {
+            teacher: true,
+          },
+          students: {
+            student: true,
+          },
+          assignments: {
+            teacher: true,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   update(id: number, updateClassDto: UpdateClassDto) {
@@ -106,31 +133,68 @@ export class ClassesService {
   }
 
   async remove(id: number) {
-    await this.classesRepository.softDelete(id);
+    try {
+      await this.classesRepository.softDelete(id);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   async restore(id: number) {
-    return await this.classesRepository.restore(id);
+    try {
+      return await this.classesRepository.restore(id);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   async addTeacherToClass(classId: number, teacherId: number) {
-    const classResult: Class = await this.classesRepository.findOne({
-      where: {
-        id: classId,
-      },
-      relations: {
-        teachers: true,
-      },
-    });
+    try {
+      const classResult: Class = await this.classesRepository.findOne({
+        where: {
+          id: classId,
+        },
+        relations: {
+          teachers: true,
+        },
+      });
 
-    const teacherResult = await this.userRepository.findOne(teacherId);
+      const teacherResult = await this.userRepository.findOne(teacherId);
 
-    const teacherClass = new TeacherClasses();
-    teacherClass.classId = classId;
-    teacherClass.userId = teacherResult.id;
+      const teacherClass = new TeacherClasses();
+      teacherClass.classId = classId;
+      teacherClass.userId = teacherResult.id;
 
-    classResult.teachers.push(teacherClass);
+      classResult.teachers.push(teacherClass);
 
-    return await this.classesRepository.save(classResult);
+      return await this.classesRepository.save(classResult);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async addStudentToClass(classId: number, studentId: number) {
+    try {
+      const classResult: Class = await this.classesRepository.findOne({
+        where: {
+          id: classId,
+        },
+        relations: {
+          students: true,
+        },
+      });
+
+      const studentResult = await this.userRepository.findOne(studentId);
+
+      const studentClass = new StudentClasses();
+      studentClass.classId = classId;
+      studentClass.userId = studentResult.id;
+
+      classResult.students.push(studentClass);
+
+      return await this.classesRepository.save(classResult);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }

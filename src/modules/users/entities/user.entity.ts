@@ -1,6 +1,8 @@
 import { Assignment } from 'src/modules/assignments/entities/assignment.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
 import { Role } from 'src/modules/roles/entities/role.entity';
+import { StudentClasses } from 'src/modules/studentClass/entities/studentClass.entity';
+import { Submission } from 'src/modules/submissions/entities/submission.entity';
 import { TeacherClasses } from 'src/modules/teacherClass/entities/teacherClass.entity';
 import {
   Column,
@@ -46,21 +48,16 @@ export class User {
   @OneToMany(() => Assignment, (assignment) => assignment.teacher)
   assignments: Assignment[];
 
-  @ManyToMany(() => Class)
-  studentClasses: Class[];
-
-  // @ManyToMany(() => Class, (classEntity) => classEntity.teachers)
-  // @JoinTable({
-  //   name: 'teacher_classes',
-  //   joinColumn: {
-  //     name: 'userId',
-  //     referencedColumnName: 'id',
-  //   },
-  // })
-  // teacherClasses: Class[];
-
-  @ManyToOne(() => TeacherClasses, (teacherClass) => teacherClass.teacher, {
+  @OneToMany(() => StudentClasses, (studentClass) => studentClass.student, {
     cascade: ['insert', 'update', 'remove', 'soft-remove'],
   })
-  teacherClasses: TeacherClasses[];
+  studentClasses: StudentClasses;
+
+  @OneToMany(() => TeacherClasses, (teacherClass) => teacherClass.teacher, {
+    cascade: ['insert', 'update', 'remove', 'soft-remove'],
+  })
+  teacherClasses: TeacherClasses;
+
+  @OneToMany(() => Submission, (submission) => submission.student)
+  submissions: Submission[];
 }

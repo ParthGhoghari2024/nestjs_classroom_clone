@@ -1,4 +1,3 @@
-import { Assignment } from 'src/modules/assignments/entities/assignment.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
@@ -6,35 +5,31 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'student_classes' })
-@Index(['student', 'class'], {
-  unique: true,
-  where: 'deletedAt not null',
-})
-export class StudentClasses {
+@Entity({ name: 'submissions' })
+export class Submission {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  classId: number;
+  studentId: number;
 
   @Column()
-  userId: number;
+  classId: number;
 
-  @ManyToOne(() => User, (user) => user.studentClasses)
-  @JoinColumn({ name: 'userId' })
-  student: User;
+  @Column({ type: 'text' })
+  submission: string;
 
-  @ManyToOne(() => Class, (classEntity) => classEntity.students)
-  @JoinColumn({ name: 'classId' })
-  class: Class;
+  @Column({ type: 'timestamp' })
+  dateTime: Date;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
@@ -44,4 +39,12 @@ export class StudentClasses {
 
   @DeleteDateColumn({ type: 'timestamp' })
   deletedAt: Date;
+
+  @ManyToOne(() => User, (user) => user.submissions)
+  @JoinColumn({ name: 'studentId' })
+  student: User;
+
+  @ManyToOne(() => Class, (classEntity) => classEntity.submissions)
+  @JoinColumn({ name: 'classId' })
+  class: Class;
 }
