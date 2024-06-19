@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateAuthDto } from './dto/createAuth.dto';
+import { LoginDto } from './dto/loginAuth.dto';
 import { UpdateAuthDto } from './dto/updateAuth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
@@ -8,6 +8,8 @@ import { registerDto } from './dto/register.dto';
 import { RolesService } from '../roles/roles.service';
 import { IRegisterAvailabity } from 'src/types/interface';
 import { Role } from '../roles/entities/role.entity';
+
+import argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
@@ -18,9 +20,40 @@ export class AuthService {
     private readonly roleService: RolesService,
   ) {}
 
+  private readonly SALT: string = process.env.SALT;
+
   private readonly logger: Logger = new Logger(AuthService.name);
-  async login(createAuthDto: CreateAuthDto) {
-    // return await this.userRepository.save()
+  async checkCredentials(loginDto: LoginDto) {
+    try {
+      const credentials: User = await this.usersRepository.findOne({
+        where: {
+          email: loginDto.email,
+        },
+        select: {
+          username: true,
+          email: true,
+          roleId: true,
+          password: true,
+        },
+      });
+
+      const match: boolean = await argon2.verify(
+        credentials.password,
+        loginDto.password,
+        {
+          secret: Buffer.from(this.SALT),
+        },
+      );
+
+      if (!match) {
+        return false;
+      }
+
+      return credentials;
+    } catch (error) {
+      this.logger.error(error);
+      return false;
+    }
   }
   async register(registerDto: registerDto, roleName: string = 'student') {
     const user: User = new User();

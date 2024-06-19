@@ -1,17 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateAssignmentDto } from './dto/createAssignment.dto';
 import { UpdateAssignmentDto } from './dto/updateAssignment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assignment } from './entities/assignment.entity';
 import { Repository } from 'typeorm';
+import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
+import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 
 @Injectable()
 export class AssignmentsService {
   constructor(
     @InjectRepository(Assignment)
     private readonly assignmentRepository: Repository<Assignment>,
+
+    private readonly attachementsEntityService: AttachementsEntityService,
   ) {}
 
+  private logger: Logger = new Logger(AssignmentsService.name);
   create(createAssignmentDto: CreateAssignmentDto, userId: number) {
     const assignment = new Assignment();
     assignment.classId = createAssignmentDto.classId;
@@ -22,6 +27,26 @@ export class AssignmentsService {
     return this.assignmentRepository.save(assignment);
   }
 
+  async addAttachementMetadata(
+    createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+  ) {
+    try {
+      return await this.attachementsEntityService.createBulk(
+        createAttachementsEntityDtos,
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+  async getAttachementMetadata(attachementId: number) {
+    try {
+      return await this.attachementsEntityService.findByAttachmentId(
+        attachementId,
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
   findAll() {
     return this.assignmentRepository.find({
       select: {

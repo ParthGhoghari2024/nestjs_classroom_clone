@@ -12,7 +12,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/createAuth.dto';
+import { LoginDto } from './dto/loginAuth.dto';
 import { UpdateAuthDto } from './dto/updateAuth.dto';
 import { registerDto } from './dto/register.dto';
 import argon2 from 'argon2';
@@ -22,6 +22,7 @@ import { IRegisterAvailabity } from 'src/types/interface';
 import { ClassesService } from '../classes/classes.service';
 import { RegisterTeacherAndAddToClass } from './dto/registerTeacherAddToClass.dto';
 import { Response } from 'express';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('')
 export class AuthController {
@@ -30,13 +31,31 @@ export class AuthController {
 
     @Inject(forwardRef(() => ClassesService))
     private readonly classesServices: ClassesService,
+    private readonly jwtService: JwtService,
   ) {}
 
   private readonly logger = new Logger(AuthController.name);
   private readonly SALT = process.env.SALT;
+
   @Post('/login')
-  login(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.login(createAuthDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userIfRightCredentials: false | User =
+      await this.authService.checkCredentials(loginDto);
+
+    if (userIfRightCredentials === false)
+      return generalJsonResponse(res, { success: 0, emailPasswordError: 1 });
+    const accessToken = await this.jwtService.signAsync({
+      username: userIfRightCredentials.username,
+      email: userIfRightCredentials.email,
+      roleId: userIfRightCredentials.roleId,
+    });
+
+    res.cookie('secret', accessToken);
+
+    res.json({ success: 1, temp: 1 });
   }
 
   @Post('/register')

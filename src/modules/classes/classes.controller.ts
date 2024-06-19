@@ -128,6 +128,7 @@ export class ClassesController {
   }
 
   @Post('/assignments')
+  @ApiOperation({ summary: 'Create class with assignments' })
   async addClassWithAssignments(
     @Body() addClassWithAssignments: AddClassWithAssignments,
     @Res() res: Response,

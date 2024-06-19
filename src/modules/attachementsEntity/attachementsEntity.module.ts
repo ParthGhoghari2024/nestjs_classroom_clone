@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AttachementsEntityService } from './attachementsEntity.service';
-import { AttachementsEntityController } from './attachementsEntity.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AttachmentsEntity } from './entities/attachementsEntity.entity';
 
 @Module({
-  controllers: [AttachementsEntityController],
+  imports: [TypeOrmModule.forFeature([AttachmentsEntity])],
+  controllers: [],
   providers: [AttachementsEntityService],
+  exports: [AttachementsEntityService],
 })
 export class AttachementsEntityModule {}

@@ -45,7 +45,7 @@ export const multerOptions = {
     // File modification details
     filename: (req: any, file: any, cb: any) => {
       // Calling the callback passing the random name generated with the original extension name
-      cb(null, `${new Date()}_${extname(file.originalname)}`);
+      cb(null, `${Date.now()}_${file.originalname}`);
     },
   }),
 };

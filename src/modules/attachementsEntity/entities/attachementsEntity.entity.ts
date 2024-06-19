@@ -5,15 +5,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
+  JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'attachmets' })
+@Entity({ name: 'attachments' })
 export class AttachmentsEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,15 +19,13 @@ export class AttachmentsEntity {
   @Column()
   attachmentId: number;
 
-  @ManyToOne(() => Assignment, (assignment) => assignment.attachments, {
-    nullable: true,
-  })
+  @ManyToOne(() => Assignment, (assignment) => assignment.attachments)
+  @JoinColumn({ name: 'attachmentId' })
   assignmentAttachment: Assignment;
 
-  @ManyToOne(() => Submission, (submission) => submission.attachments, {
-    nullable: true,
-  })
-  submissionAttachement: Submission;
+  @ManyToOne(() => Submission, (submission) => submission.attachments)
+  @JoinColumn({ name: 'attachmentId' })
+  submissionAttachment: Submission;
 
   @Column()
   attachmentType: 'assignment' | 'submission';

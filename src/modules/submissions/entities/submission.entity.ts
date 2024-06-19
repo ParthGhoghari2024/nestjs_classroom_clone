@@ -30,7 +30,7 @@ export class Submission {
   submission: string;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;  
+  createdAt: Date;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
@@ -42,9 +42,9 @@ export class Submission {
   @JoinColumn({ name: 'studentId' })
   student: User;
 
-  @ManyToOne(
+  @OneToMany(
     () => AttachmentsEntity,
-    (attachment) => attachment.submissionAttachement,
+    (attachment) => attachment.submissionAttachment,
   )
   attachments: AttachmentsEntity[];
   @ManyToOne(() => Class, (classEntity) => classEntity.submissions)
