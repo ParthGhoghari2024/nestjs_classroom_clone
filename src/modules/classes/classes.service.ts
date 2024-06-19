@@ -3,15 +3,24 @@ import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { Class } from './entities/class.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  EntityManager,
+  In,
+  Repository,
+  Transaction,
+  getManager,
+} from 'typeorm';
 import generateUniqueId from 'generate-unique-id';
 import { UsersService } from '../users/users.service';
 import { TeacherClasses } from '../teacherClass/entities/teacherClass.entity';
 import { StudentClasses } from '../studentClass/entities/studentClass.entity';
-import { createTeacherAddToClass } from './dto/createTeacherAddToClass.dto';
 import { AuthService } from '../auth/auth.service';
 import { registerDto } from '../auth/dto/register.dto';
 import { TeacherClassesService } from '../teacherClass/teacherClasses.service';
+import { User } from '../users/entities/user.entity';
+import { CreateTeacherClassDto } from '../teacherClass/dto/create-teacherClass.dto';
+import generalJsonResponse from 'src/helper/generalResponse.helper';
+import { RegisterTeacherAndAddToClass } from '../auth/dto/registerTeacherAddToClass.dto';
 @Injectable()
 export class ClassesService {
   constructor(
@@ -21,10 +30,12 @@ export class ClassesService {
     private readonly userRepository: UsersService,
     private readonly authRepository: AuthService,
 
-    private readonly teacherClassesRepository: TeacherClassesService,
+    private readonly teacherClassesService: TeacherClassesService,
+    private entityManager: EntityManager,
   ) {}
 
   private readonly logger = new Logger(ClassesService.name);
+
   async create(createClassDto: CreateClassDto) {
     try {
       const newClass: Class = new Class();
@@ -206,39 +217,73 @@ export class ClassesService {
   }
 
   async createTeacherAddToClass(
-    createTeacherAddToClass: createTeacherAddToClass,
+    createTeacherAddToClass: RegisterTeacherAndAddToClass,
   ) {
+    let newTeacherToClassArr: TeacherClasses[] = [];
+    let errorFlag = 0;
     try {
-      const registerObj: registerDto = {
-        username: createTeacherAddToClass.username,
-        password: createTeacherAddToClass.password,
-        confirmPassword: createTeacherAddToClass.confirmPassword,
-        email: createTeacherAddToClass.email,
-      };
-      const newTeacher = await this.authRepository.register(registerObj);
+      await this.entityManager.transaction(async () => {
+        const registerObj: registerDto = {
+          username: createTeacherAddToClass.username,
+          password: createTeacherAddToClass.password,
+          confirmPassword: createTeacherAddToClass.confirmPassword,
+          email: createTeacherAddToClass.email,
+        };
 
-      console.log(newTeacher);
+        createTeacherAddToClass.UIds = [...createTeacherAddToClass.UIds, 'abc'];
 
-      const classEntity = await this.teacherClassesRepository.findByClassId(
-        createTeacherAddToClass.classId,
-      );
+        const classes: Class[] = await Promise.all(
+          createTeacherAddToClass.UIds.map(async (UId) => {
+            return await this.getClassIdByUId(UId);
+          }),
+        );
 
-      classEntity.teacher = newTeacher;
+        const nullIds = classes.filter((classEntity) => classEntity === null);
+        if (nullIds.length != 0) {
+          errorFlag = 1;
+          throw Error('Wrong Uid');
+        }
 
-      // const classes: TeacherClasses[] = [];
+        const newTeacher: User = await this.authRepository.register(
+          registerObj,
+          'teacher',
+        );
 
-      // await Promise.all(
-      //   createTeacherAddToClass.classIds.map(async (id) => {
-      //     const classData = await this.classesRepository.findOne({
-      //       where: {
-      //         id,
-      //       },
-      //     });
-      //     classes.push(classData);
-      //   }),
-      // );
+        newTeacherToClassArr = await Promise.all(
+          classes.map(async (classEntity) => {
+            const teacherClassDto: CreateTeacherClassDto = {
+              classId: classEntity.id,
+              userId: newTeacher.id,
+            };
+            const newTeacherToClass: TeacherClasses =
+              await this.teacherClassesService.save(teacherClassDto);
+
+            return newTeacherToClass;
+          }),
+        );
+      });
+      if (errorFlag === 1) return false;
+      return newTeacherToClassArr;
     } catch (error) {
       this.logger.error(error);
     }
+  }
+  async getClassIdByUId(UId: string) {
+    let classEntity: Class;
+    try {
+      classEntity = await this.entityManager.transaction(async () => {
+        return await this.classesRepository.findOne({
+          where: {
+            UId: UId,
+          },
+          select: {
+            id: true,
+          },
+        });
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
+    return classEntity;
   }
 }

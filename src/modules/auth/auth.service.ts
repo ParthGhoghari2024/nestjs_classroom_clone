@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,8 @@ import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { registerDto } from './dto/register.dto';
 import { RolesService } from '../roles/roles.service';
+import { IRegisterAvailabity } from 'src/types/interface';
+import { Role } from '../roles/entities/role.entity';
 
 @Injectable()
 export class AuthService {
@@ -15,13 +17,15 @@ export class AuthService {
 
     private readonly roleService: RolesService,
   ) {}
+
+  private readonly logger: Logger = new Logger(AuthService.name);
   async login(createAuthDto: CreateAuthDto) {
     // return await this.userRepository.save()
   }
-  async register(registerDto: registerDto) {
-    const user = new User();
+  async register(registerDto: registerDto, roleName: string = 'student') {
+    const user: User = new User();
 
-    const role = await this.roleService.findByRole('student');
+    const role: Role = await this.roleService.findByRole(roleName);
 
     user.username = registerDto.username;
     user.email = registerDto.email;
@@ -32,6 +36,32 @@ export class AuthService {
 
     return this.usersRepository.save(user);
     // return 'This action adds a new user';
+  }
+
+  async checkAvailabity(username: string, email: string) {
+    const res: IRegisterAvailabity = {
+      usernameAvailabity: 1,
+      emailAvailabity: 1,
+    };
+    try {
+      const usernameAvailabity: User = await this.usersRepository.findOne({
+        where: {
+          username: username,
+        },
+      });
+
+      const emailAvailabity: User = await this.usersRepository.findOne({
+        where: {
+          email: email,
+        },
+      });
+
+      usernameAvailabity && (res.usernameAvailabity = 0);
+      emailAvailabity && (res.emailAvailabity = 0);
+    } catch (error) {
+      this.logger.error(error);
+    }
+    return res;
   }
 
   findAll() {

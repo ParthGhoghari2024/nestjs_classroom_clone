@@ -33,3 +33,8 @@ export interface IGeneralJsonResponse {
   toast: boolean;
   response_type: string;
 }
+
+export interface IRegisterAvailabity {
+  usernameAvailabity: number;
+  emailAvailabity: number;
+}
