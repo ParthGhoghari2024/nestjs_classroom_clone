@@ -35,7 +35,9 @@ export class Class {
   @DeleteDateColumn({ type: 'timestamp' })
   deletedAt: Date;
 
-  @OneToMany(() => Assignment, (assignment) => assignment.class)
+  @OneToMany(() => Assignment, (assignment) => assignment.class, {
+    cascade: ['insert', 'update', 'remove', 'soft-remove'],
+  })
   assignments: Assignment[];
 
   @OneToMany(() => StudentClasses, (studentClass) => studentClass.class, {

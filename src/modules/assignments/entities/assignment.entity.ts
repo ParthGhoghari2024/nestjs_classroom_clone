@@ -1,3 +1,4 @@
+import { AttachmentsEntity } from 'src/modules/attachementsEntity/entities/attachementsEntity.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
@@ -7,6 +8,7 @@ import {
   Entity,
   JoinTable,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -39,6 +41,12 @@ export class Assignment {
   @ManyToOne(() => User, (user) => user.assignments)
   @JoinTable({ name: 'teacherId' })
   teacher: User;
+
+  @OneToMany(
+    () => AttachmentsEntity,
+    (attachment) => attachment.assignmentAttachment,
+  )
+  attachments: AttachmentsEntity[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

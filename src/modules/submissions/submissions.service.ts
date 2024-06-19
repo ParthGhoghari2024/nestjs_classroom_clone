@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { UpdateSubmissionDto } from './dto/update-submission.dto';
+import { CreateSubmissionDto } from './dto/createSubmission.dto';
+import { UpdateSubmissionDto } from './dto/updateSubmission.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Submission } from './entities/submission.entity';
 import { Repository } from 'typeorm';

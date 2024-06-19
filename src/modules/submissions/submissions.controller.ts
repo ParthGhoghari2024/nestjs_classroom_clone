@@ -10,8 +10,8 @@ import {
   Res,
 } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
-import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { UpdateSubmissionDto } from './dto/update-submission.dto';
+import { CreateSubmissionDto } from './dto/createSubmission.dto';
+import { UpdateSubmissionDto } from './dto/updateSubmission.dto';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Submission } from './entities/submission.entity';
 import { UpdateResult } from 'typeorm';

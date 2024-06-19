@@ -6,10 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
-import { CreateAssignmentDto } from './dto/create-assignment.dto';
-import { UpdateAssignmentDto } from './dto/update-assignment.dto';
+import { CreateAssignmentDto } from './dto/createAssignment.dto';
+import { UpdateAssignmentDto } from './dto/updateAssignment.dto';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
+import { multerOptions } from 'src/utils/multerOptions.utils';
 
 @Controller('assignment')
 export class AssignmentsController {
@@ -43,5 +51,21 @@ export class AssignmentsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.assignmentsService.remove(+id);
+  }
+
+  @Post('/upload/:id')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        {
+          name: 'files',
+          maxCount: 10,
+        },
+      ],
+      multerOptions,
+    ),
+  )
+  async upload(@UploadedFiles() files) {
+    console.log(files);
   }
 }

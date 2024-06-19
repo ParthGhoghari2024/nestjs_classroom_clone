@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateClassDto } from './dto/create-class.dto';
-import { UpdateClassDto } from './dto/update-class.dto';
+import { CreateClassDto } from './dto/createClass.dto';
+import { UpdateClassDto } from './dto/updateClass.dto';
 import { Class } from './entities/class.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -18,9 +18,11 @@ import { AuthService } from '../auth/auth.service';
 import { registerDto } from '../auth/dto/register.dto';
 import { TeacherClassesService } from '../teacherClass/teacherClasses.service';
 import { User } from '../users/entities/user.entity';
-import { CreateTeacherClassDto } from '../teacherClass/dto/create-teacherClass.dto';
+import { CreateTeacherClassDto } from '../teacherClass/dto/createTeacherClass.dto';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { RegisterTeacherAndAddToClass } from '../auth/dto/registerTeacherAddToClass.dto';
+import { AddClassWithAssignments } from './dto/addClassWithAssignments.dto';
+import { Assignment } from '../assignments/entities/assignment.entity';
 @Injectable()
 export class ClassesService {
   constructor(
@@ -285,5 +287,37 @@ export class ClassesService {
       this.logger.error(error);
     }
     return classEntity;
+  }
+
+  async addClassWithAssignments(
+    addClassWithAssignments: AddClassWithAssignments,
+    userId: number,
+  ) {
+    try {
+      const newClass: Class = new Class();
+
+      const UId: string = generateUniqueId({
+        length: 6,
+      });
+      newClass.name = addClassWithAssignments.name;
+      newClass.UId = UId;
+
+      const assignmentsArray: Assignment[] = [];
+      addClassWithAssignments.assignments.map(async (assignment) => {
+        const newAssignement = new Assignment();
+        newAssignement.title = assignment.title;
+        newAssignement.descrption = assignment.description;
+        newAssignement.dueDate = assignment.dueDate;
+        newAssignement.teacherId = userId;
+
+        assignmentsArray.push(newAssignement);
+      });
+
+      newClass.assignments = assignmentsArray;
+
+      return await this.classesRepository.save(newClass);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }

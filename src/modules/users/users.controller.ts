@@ -11,8 +11,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/createUser.dto';
+import { UpdateUserDto } from './dto/updateUser.dto';
 import generalResponse from 'src/helper/generalResponse.helper';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { UpdateResult } from 'typeorm';

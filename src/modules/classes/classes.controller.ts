@@ -11,12 +11,14 @@ import {
   RequestMapping,
 } from '@nestjs/common';
 import { ClassesService } from './classes.service';
-import { CreateClassDto } from './dto/create-class.dto';
-import { UpdateClassDto } from './dto/update-class.dto';
+import { CreateClassDto } from './dto/createClass.dto';
+import { UpdateClassDto } from './dto/updateClass.dto';
 import { Class } from './entities/class.entity';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { TeacherClasses } from '../teacherClass/entities/teacherClass.entity';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AddClassWithAssignments } from './dto/addClassWithAssignments.dto';
+import { Response } from 'express';
 
 @ApiTags('class')
 @Controller('class')
@@ -122,6 +124,33 @@ export class ClassesController {
     } catch (error) {
       this.logger.error(error);
       return generalJsonResponse(res, { success: 1 }, '', 'error', false, 500);
+    }
+  }
+
+  @Post('/assignments')
+  async addClassWithAssignments(
+    @Body() addClassWithAssignments: AddClassWithAssignments,
+    @Res() res: Response,
+  ) {
+    try {
+      const userId: number = 1;
+      const createResult = await this.classesService.addClassWithAssignments(
+        addClassWithAssignments,
+        userId,
+      );
+      if (createResult) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
     }
   }
 }

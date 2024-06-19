@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TeacherClasses } from './entities/teacherClass.entity';
-import { CreateTeacherClassDto } from './dto/create-teacherClass.dto';
-import { UpdateTeacherClassDto } from './dto/update-teacherClass.dto';
+import { CreateTeacherClassDto } from './dto/createTeacherClass.dto';
+import { UpdateTeacherClassDto } from './dto/updateTeacherClass.dto';
 @Injectable()
 export class TeacherClassesService {
   constructor(

@@ -1,3 +1,4 @@
+import { AttachmentsEntity } from 'src/modules/attachementsEntity/entities/attachementsEntity.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
@@ -29,7 +30,7 @@ export class Submission {
   submission: string;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+  createdAt: Date;  
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
@@ -41,6 +42,11 @@ export class Submission {
   @JoinColumn({ name: 'studentId' })
   student: User;
 
+  @ManyToOne(
+    () => AttachmentsEntity,
+    (attachment) => attachment.submissionAttachement,
+  )
+  attachments: AttachmentsEntity[];
   @ManyToOne(() => Class, (classEntity) => classEntity.submissions)
   @JoinColumn({ name: 'classId' })
   class: Class;

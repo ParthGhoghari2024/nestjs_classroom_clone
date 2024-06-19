@@ -12,8 +12,8 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateAuthDto } from './dto/createAuth.dto';
+import { UpdateAuthDto } from './dto/updateAuth.dto';
 import { registerDto } from './dto/register.dto';
 import argon2 from 'argon2';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
