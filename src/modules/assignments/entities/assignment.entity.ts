@@ -42,7 +42,10 @@ export class Assignment {
   @JoinTable({ name: 'teacherId' })
   teacher: User;
 
-  @OneToMany(() => AttachmentsEntity, (attachment) => attachment.attachmentId)
+  @OneToMany(
+    () => AttachmentsEntity,
+    (attachment) => attachment.assignmentAttachment,
+  )
   attachments: AttachmentsEntity[];
 
   @CreateDateColumn({ type: 'timestamp' })

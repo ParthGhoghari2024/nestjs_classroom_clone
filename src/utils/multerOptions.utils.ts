@@ -1,11 +1,10 @@
-import { extname } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { diskStorage } from 'multer';
-import { HttpException, HttpStatus } from '@nestjs/common';
-
+import { Multer, diskStorage } from 'multer';
+import { Request } from 'express';
 // Multer configuration
 export const multerConfig = {
-  dest: process.env.UPLOAD_LOCATION_ASSIGNMENT,
+  assignementDest: process.env.UPLOAD_LOCATION_ASSIGNMENT,
+  submissionDest: process.env.UPLOAD_LOCATION_SUBMISSION,
 };
 
 // Multer upload options
@@ -15,7 +14,7 @@ export const multerOptions = {
     fileSize: 10 * 1024 * 1024, //10MB
   },
   // Check the mimetypes to allow for upload
-  fileFilter: (req: any, file: any, cb: any) => {
+  fileFilter: (req: Request, file: Express.Multer.File, cb: any) => {
     // if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
     //   // Allow storage of file
     //   cb(null, true);
@@ -34,8 +33,17 @@ export const multerOptions = {
   // Storage properties
   storage: diskStorage({
     // Destination storage path details
-    destination: (req: any, file: any, cb: any) => {
-      const uploadPath = multerConfig.dest;
+    destination: (req: Request, file: Express.Multer.File, cb: any) => {
+      const reqUrl: string[] = req.url.split('/');
+
+      const isSubmission: boolean =
+        reqUrl.filter((urlPart) => urlPart === 'submissions').length != 0
+          ? true
+          : false;
+
+      let uploadPath: string = multerConfig.assignementDest;
+
+      if (isSubmission) uploadPath = multerConfig.submissionDest;
       // Create folder if doesn't exist
       if (!existsSync(uploadPath)) {
         mkdirSync(uploadPath, { recursive: true });
@@ -43,7 +51,7 @@ export const multerOptions = {
       cb(null, uploadPath);
     },
     // File modification details
-    filename: (req: any, file: any, cb: any) => {
+    filename: (req: Request, file: Express.Multer.File, cb: any) => {
       // Calling the callback passing the random name generated with the original extension name
       cb(null, `${Date.now()}_${file.originalname}`);
     },

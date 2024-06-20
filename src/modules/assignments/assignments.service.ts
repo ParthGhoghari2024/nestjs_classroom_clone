@@ -84,8 +84,35 @@ export class AssignmentsService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} assignment`;
+  async findOne(id: number) {
+    return this.assignmentRepository.findOne({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        class: {
+          id: true,
+          name: true,
+        },
+        teacher: {
+          id: true,
+          username: true,
+          email: true,
+        },
+        title: true,
+        descrption: true,
+        dueDate: true,
+        attachments: {
+          path: true,
+        },
+      },
+      relations: {
+        class: true,
+        teacher: true,
+        attachments: true,
+      },
+    });
   }
 
   update(id: number, updateAssignmentDto: UpdateAssignmentDto) {

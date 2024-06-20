@@ -30,7 +30,13 @@ import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEn
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Assignment } from './entities/assignment.entity';
 
 @ApiBearerAuth()
@@ -72,6 +78,24 @@ export class AssignmentsController {
     return this.assignmentsService.remove(+id);
   }
 
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        assignmentId: {
+          type: 'number',
+        },
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
   @Post('/upload/:id')
   @UseInterceptors(
     FileFieldsInterceptor(

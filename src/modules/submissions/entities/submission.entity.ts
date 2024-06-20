@@ -42,8 +42,12 @@ export class Submission {
   @JoinColumn({ name: 'studentId' })
   student: User;
 
-  @OneToMany(() => AttachmentsEntity, (attachment) => attachment.attachmentId)
+  @OneToMany(
+    () => AttachmentsEntity,
+    (attachment) => attachment.submissionAttachment,
+  )
   attachments: AttachmentsEntity[];
+
   @ManyToOne(() => Class, (classEntity) => classEntity.submissions)
   @JoinColumn({ name: 'classId' })
   class: Class;
