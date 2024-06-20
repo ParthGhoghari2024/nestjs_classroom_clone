@@ -38,7 +38,7 @@ export class AttachementsEntityService {
     return await this.attachementsService.find({
       where: {
         attachmentId: id,
-        attachmentType: 'assignment',
+        // attachmentType: 'assignment',
       },
       select: {
         path: true,

@@ -12,6 +12,7 @@ import {
   Injectable,
   Res,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { CreateAssignmentDto } from './dto/createAssignment.dto';
@@ -28,13 +29,20 @@ import { AttachementsEntityService } from '../attachementsEntity/attachementsEnt
 import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Response } from 'express';
+import { AuthGuard } from '../auth/auth.guard';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Assignment } from './entities/assignment.entity';
 
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
+@ApiTags('assignment')
 @Controller('assignment')
 export class AssignmentsController {
   constructor(private readonly assignmentsService: AssignmentsService) {}
 
   private readonly logger: Logger = new Logger(AssignmentsController.name);
   @Post()
+  @ApiOperation({ summary: 'post assignments' })
   create(@Body() createAssignmentDto: CreateAssignmentDto) {
     const userId: number = 1; //TODO:
     createAssignmentDto.dueDate = new Date(createAssignmentDto.dueDate);
@@ -123,7 +131,7 @@ export class AssignmentsController {
   @Get('/attachment/metadata/:id')
   async getAttachementFile(@Param('id') id: string, @Res() res) {
     try {
-      const attachementMetaData =
+      const attachementMetaData: Assignment =
         await this.assignmentsService.getAttachementMetadata(+id);
 
       if (attachementMetaData)

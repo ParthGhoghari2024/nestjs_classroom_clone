@@ -6,6 +6,7 @@ import { Assignment } from './entities/assignment.entity';
 import { Repository } from 'typeorm';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
+import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
 
 @Injectable()
 export class AssignmentsService {
@@ -40,9 +41,19 @@ export class AssignmentsService {
   }
   async getAttachementMetadata(attachementId: number) {
     try {
-      return await this.attachementsEntityService.findByAttachmentId(
-        attachementId,
-      );
+      // return await this.attachementsEntityService.findByAttachmentId(
+      //   attachementId,
+      // );
+      return await this.assignmentRepository.findOne({
+        where: {
+          id: attachementId,
+          // attachments: true,
+          // attachments: true,
+        },
+        relations: {
+          attachments: true,
+        },
+      });
     } catch (error) {
       this.logger.error(error);
     }

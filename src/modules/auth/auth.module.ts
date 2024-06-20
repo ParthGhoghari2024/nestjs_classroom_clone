@@ -6,12 +6,17 @@ import { User } from '../users/entities/user.entity';
 import { RolesModule } from '../roles/roles.module';
 import { ClassesModule } from '../classes/classes.module';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
+
+ConfigModule.forRoot({
+  isGlobal: true,
+});
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
-//TODO:
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forFeature([User]),
     RolesModule,
     forwardRef(() => ClassesModule), //to avoid circular dependency

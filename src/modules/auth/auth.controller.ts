@@ -23,8 +23,10 @@ import { ClassesService } from '../classes/classes.service';
 import { RegisterTeacherAndAddToClass } from './dto/registerTeacherAddToClass.dto';
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
+import { ApiBody, ApiConsumes, ApiProperty, ApiTags } from '@nestjs/swagger';
 
 @Controller('')
+@ApiTags('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -38,6 +40,10 @@ export class AuthController {
   private readonly SALT = process.env.SALT;
 
   @Post('/login')
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiBody({
+    type: LoginDto,
+  })
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -47,15 +53,15 @@ export class AuthController {
 
     if (userIfRightCredentials === false)
       return generalJsonResponse(res, { success: 0, emailPasswordError: 1 });
-    const accessToken = await this.jwtService.signAsync({
+    const accessToken: string = await this.jwtService.signAsync({
       username: userIfRightCredentials.username,
       email: userIfRightCredentials.email,
       roleId: userIfRightCredentials.roleId,
     });
 
-    res.cookie('secret', accessToken);
+    res.cookie('access_token', accessToken);
 
-    res.json({ success: 1, temp: 1 });
+    res.json({ success: 1, temp: 1, token: accessToken });
   }
 
   @Post('/register')

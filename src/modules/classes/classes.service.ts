@@ -148,13 +148,13 @@ export class ClassesService {
     }
   }
 
-  update(id: number, updateClassDto: UpdateClassDto) {
-    return `This action updates a #${id} class`;
+  async update(id: number, updateClassDto: UpdateClassDto) {
+    return await this.classesRepository.update(id, updateClassDto);
   }
 
   async remove(id: number) {
     try {
-      await this.classesRepository.softDelete(id);
+      return await this.classesRepository.softDelete(id);
     } catch (error) {
       this.logger.error(error);
     }
@@ -179,9 +179,9 @@ export class ClassesService {
         },
       });
 
-      const teacherResult = await this.userRepository.findOne(teacherId);
+      const teacherResult: User = await this.userRepository.findOne(teacherId);
 
-      const teacherClass = new TeacherClasses();
+      const teacherClass: TeacherClasses = new TeacherClasses();
       teacherClass.classId = classId;
       teacherClass.userId = teacherResult.id;
 
@@ -204,9 +204,9 @@ export class ClassesService {
         },
       });
 
-      const studentResult = await this.userRepository.findOne(studentId);
+      const studentResult: User = await this.userRepository.findOne(studentId);
 
-      const studentClass = new StudentClasses();
+      const studentClass: StudentClasses = new StudentClasses();
       studentClass.classId = classId;
       studentClass.userId = studentResult.id;
 
@@ -222,7 +222,7 @@ export class ClassesService {
     createTeacherAddToClass: RegisterTeacherAndAddToClass,
   ) {
     let newTeacherToClassArr: TeacherClasses[] = [];
-    let errorFlag = 0;
+    let errorFlag: number = 0;
     try {
       await this.entityManager.transaction(async () => {
         const registerObj: registerDto = {
@@ -240,7 +240,9 @@ export class ClassesService {
           }),
         );
 
-        const nullIds = classes.filter((classEntity) => classEntity === null);
+        const nullIds: Class[] = classes.filter(
+          (classEntity) => classEntity === null,
+        );
         if (nullIds.length != 0) {
           errorFlag = 1;
           throw Error('Wrong Uid');

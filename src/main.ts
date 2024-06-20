@@ -8,10 +8,10 @@ async function bootstrap() {
 
   app.use(cookieParser());
   const config = new DocumentBuilder()
+    .addBearerAuth()
     .setTitle('Classroom example')
     .setDescription('The Classroom API description')
     .setVersion('1.0')
-    .addTag('users')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

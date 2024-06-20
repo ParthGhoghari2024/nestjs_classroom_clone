@@ -8,6 +8,7 @@ import {
   Delete,
   Logger,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/createSubmission.dto';
@@ -15,7 +16,12 @@ import { UpdateSubmissionDto } from './dto/updateSubmission.dto';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Submission } from './entities/submission.entity';
 import { UpdateResult } from 'typeorm';
+import { AuthGuard } from '../auth/auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth()
+@ApiTags('submissions')
+@UseGuards(AuthGuard)
 @Controller('submissions')
 export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
@@ -53,17 +59,34 @@ export class SubmissionsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.submissionsService.findOne(+id);
+  async findOne(@Param('id') id: string, @Res() res) {
+    try {
+      const submission: Submission = await this.submissionsService.findOne(+id);
+
+      if (submission)
+        return generalJsonResponse(res, { success: 1, result: submission });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateSubmissionDto: UpdateSubmissionDto,
-  ) {
-    return await this.submissionsService.update(+id, updateSubmissionDto);
-  }
+  // @Patch(':id')
+  // async update(
+  //   @Param('id') id: string,
+  //   @Body() updateSubmissionDto: UpdateSubmissionDto,
+  // ) {
+  //   return await this.submissionsService.update(+id, updateSubmissionDto);
+  // }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res) {

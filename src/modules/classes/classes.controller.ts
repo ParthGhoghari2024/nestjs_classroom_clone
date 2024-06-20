@@ -9,6 +9,7 @@ import {
   Res,
   Logger,
   RequestMapping,
+  UseGuards,
 } from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { CreateClassDto } from './dto/createClass.dto';
@@ -16,10 +17,19 @@ import { UpdateClassDto } from './dto/updateClass.dto';
 import { Class } from './entities/class.entity';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { TeacherClasses } from '../teacherClass/entities/teacherClass.entity';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AddClassWithAssignments } from './dto/addClassWithAssignments.dto';
 import { Response } from 'express';
+import { AuthGuard } from '../auth/auth.guard';
+import { UpdateResult } from 'typeorm';
 
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
 @ApiTags('class')
 @Controller('class')
 export class ClassesController {
@@ -49,16 +59,53 @@ export class ClassesController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'update class by id' })
   async update(
     @Param('id') id: string,
     @Body() updateClassDto: UpdateClassDto,
+    @Res() res: Response,
   ) {
-    return this.classesService.update(+id, updateClassDto);
+    try {
+      const updateResult: UpdateResult = await this.classesService.update(
+        +id,
+        updateClassDto,
+      );
+
+      if (updateResult) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.classesService.remove(+id);
+  async remove(@Param('id') id: string, @Res() res) {
+    try {
+      const deleteResult: UpdateResult = await this.classesService.remove(+id);
+
+      if (deleteResult) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @Post('/restore/:id')
