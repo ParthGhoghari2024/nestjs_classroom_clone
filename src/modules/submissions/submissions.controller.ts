@@ -11,6 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  Req,
 } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/createSubmission.dto';
@@ -24,7 +25,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from 'src/utils/multerOptions.utils';
 import { UploadSubmissionDto } from './dto/uploadSubmission.dto';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 @ApiBearerAuth()
 @ApiTags('submissions')
 @UseGuards(AuthGuard)
@@ -167,23 +168,23 @@ export class SubmissionsController {
           maxCount: 10,
         },
       ],
-      multerOptions,
+      multerOptions('submission'),
     ),
   )
   async upload(
     @UploadedFiles() files,
     @Body() uploadSubmissionDto: UploadSubmissionDto,
     @Res() res: Response,
+    @Req() req: Request,
   ) {
     try {
-      const userId: number = 1; //TODO:
+      const userId: number = req.user.id; //TODO:
 
       const attachementsFileDetailArray: CreateAttachementsEntityDto[] = [];
       files &&
         files.files &&
         files.files.forEach((file: Express.Multer.File) => {
           const attachementsFileDetail: CreateAttachementsEntityDto = {
-            // attachmentId: uploadSubmissionDto.submissionId, //TODO:
             attachmentType: 'submission',
             original_filename: file.originalname,
             new_filename: file.filename,

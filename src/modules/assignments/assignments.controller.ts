@@ -43,7 +43,6 @@ import { ClassesService } from '../classes/classes.service';
 import { UpdateResult } from 'typeorm';
 import { RolesEnum } from 'src/types/constants';
 import { Class } from '../classes/entities/class.entity';
-import { IId } from 'src/types/interface';
 import { Request } from 'express';
 
 @ApiBearerAuth()
@@ -207,16 +206,17 @@ export class AssignmentsController {
           maxCount: 10,
         },
       ],
-      multerOptions,
+      multerOptions('assignment'),
     ),
   )
   async upload(
     @UploadedFiles() files,
     @Body() uploadAssignmentDto: UploadAssignmentDto,
     @Res() res: Response,
+    @Req() req: Request,
   ) {
     try {
-      const userId: number = 1; //TODO:
+      const userId: number = req.user.id || 1; //TODO:
 
       const attachementsFileDetailArray: CreateAttachementsEntityDto[] = [];
       files &&
@@ -233,7 +233,7 @@ export class AssignmentsController {
           attachementsFileDetailArray.push(attachementsFileDetail);
         });
 
-      const createAttachementsMetaData =
+      const createAttachementsMetaData: Assignment =
         await this.assignmentsService.addAttachementMetadata(
           attachementsFileDetailArray,
           uploadAssignmentDto,
@@ -253,6 +253,7 @@ export class AssignmentsController {
         );
     } catch (error) {
       this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
     }
   }
 

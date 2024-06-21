@@ -12,7 +12,7 @@ export class TeacherClassesService {
   ) {}
 
   async create(createTeachrClassDto: CreateTeacherClassDto) {
-    const teacherClass = new TeacherClasses();
+    const teacherClass: TeacherClasses = new TeacherClasses();
 
     teacherClass.classId = createTeachrClassDto.classId;
     teacherClass.userId = createTeachrClassDto.userId;

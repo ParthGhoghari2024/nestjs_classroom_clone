@@ -18,12 +18,13 @@ import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { UpdateResult } from 'typeorm';
 import { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { User } from './entities/user.entity';
 
 @ApiBearerAuth()
 @ApiTags('user')
 @Controller('users')
 export class UsersController {
-  private readonly logger = new Logger(UsersController.name);
+  private readonly logger: Logger = new Logger(UsersController.name);
   constructor(private readonly usersService: UsersService) {}
 
   // @Post()
@@ -34,7 +35,7 @@ export class UsersController {
   @Get()
   async findAll(@Res() res: Response) {
     try {
-      const users = await this.usersService.findAll();
+      const users: User[] = await this.usersService.findAll();
 
       return generalJsonResponse(res, users);
     } catch (error) {

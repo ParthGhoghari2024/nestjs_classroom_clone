@@ -10,6 +10,7 @@ import {
   Logger,
   RequestMapping,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { CreateClassDto } from './dto/createClass.dto';
@@ -24,9 +25,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AddClassWithAssignments } from './dto/addClassWithAssignments.dto';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { UpdateResult } from 'typeorm';
+import { RolesEnum } from 'src/types/constants';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -38,8 +40,43 @@ export class ClassesController {
   private logger: Logger = new Logger(ClassesController.name);
   @Post()
   @ApiOperation({ summary: 'Create class' })
-  async create(@Body() createClassDto: CreateClassDto) {
-    return await this.classesService.create(createClassDto);
+  async create(
+    @Body() createClassDto: CreateClassDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const userId: number = req.user.id;
+      const userRole: string = req.user.role;
+
+      if (userRole != RolesEnum.Teacher) {
+        return generalJsonResponse(
+          res,
+          { success: 0, roleError: 1 },
+          '',
+          'error',
+          false,
+          400,
+        );
+      }
+      const classEntity: Class = await this.classesService.create(
+        createClassDto,
+        userId,
+      );
+      if (classEntity) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          500,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 400);
+    }
   }
 
   @Get()
@@ -112,7 +149,7 @@ export class ClassesController {
   async restoreClass(@Param('id') id: string, @Res() res) {
     try {
       const classId: number = Number(id);
-      const restoreResult = await this.classesService.restore(classId);
+      const restoreResult: Class = await this.classesService.restore(classId);
 
       if (restoreResult) return generalJsonResponse(res, { success: 1 });
       else generalJsonResponse(res, { success: 0 }, '', 'error', false, 400);
@@ -123,11 +160,11 @@ export class ClassesController {
   }
 
   @Post('/teacher/:id')
-  async addTeacherToClass(@Param('id') id: string, @Res() res) {
+  async addTeacherToClass(@Param('id') id: string, @Res() res, @Req() req) {
     try {
       const classId: number = Number(id);
-      const userId: number = 1; //TODO:
-      const createResult = await this.classesService.addTeacherToClass(
+      const userId: number = req.user.id || 1; //TODO:
+      const createResult: Class = await this.classesService.addTeacherToClass(
         classId,
         userId,
       );
@@ -149,11 +186,11 @@ export class ClassesController {
   }
 
   @Post('/student/:id')
-  async addStudentToClass(@Param('id') id: string, @Res() res) {
+  async addStudentToClass(@Param('id') id: string, @Res() res, @Req() req) {
     try {
       const classId: number = Number(id);
-      const userId: number = 1; //TODO:
-      const createResult = await this.classesService.addStudentToClass(
+      const userId: number = req.user.id || 1; //TODO:
+      const createResult: Class = await this.classesService.addStudentToClass(
         classId,
         userId,
       );
@@ -179,13 +216,15 @@ export class ClassesController {
   async addClassWithAssignments(
     @Body() addClassWithAssignments: AddClassWithAssignments,
     @Res() res: Response,
+    @Req() req: Request,
   ) {
     try {
-      const userId: number = 1;
-      const createResult = await this.classesService.addClassWithAssignments(
-        addClassWithAssignments,
-        userId,
-      );
+      const userId: number = req.user.id || 1;
+      const createResult: Class =
+        await this.classesService.addClassWithAssignments(
+          addClassWithAssignments,
+          userId,
+        );
       if (createResult) return generalJsonResponse(res, { success: 1 });
       else
         return generalJsonResponse(

@@ -10,9 +10,9 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Class]),
-    UsersModule,
     TeacherClassesModule,
     AuthModule,
+    UsersModule,
   ],
   controllers: [ClassesController],
   providers: [ClassesService],

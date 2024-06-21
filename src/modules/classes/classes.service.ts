@@ -39,7 +39,7 @@ export class ClassesService {
 
   private readonly logger = new Logger(ClassesService.name);
 
-  async create(createClassDto: CreateClassDto) {
+  async create(createClassDto: CreateClassDto, userId: number) {
     try {
       const newClass: Class = new Class();
 
@@ -48,6 +48,7 @@ export class ClassesService {
       });
       newClass.name = createClassDto.name;
       newClass.UId = UId;
+      newClass.userId = userId;
 
       return this.classesRepository.save(newClass);
     } catch (error) {

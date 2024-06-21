@@ -79,4 +79,9 @@ export class User {
     cascade: true,
   })
   attachments: AttachmentsEntity[];
+
+  @OneToMany(() => Class, (classEntity) => classEntity.user, {
+    cascade: true,
+  })
+  classes: Class[];
 }

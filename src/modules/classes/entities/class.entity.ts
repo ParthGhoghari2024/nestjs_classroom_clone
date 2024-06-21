@@ -8,8 +8,10 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -25,6 +27,13 @@ export class Class {
 
   @Column()
   UId: string;
+
+  @Column()
+  userId: number;
+
+  @ManyToOne(() => User, (user) => user.classes)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

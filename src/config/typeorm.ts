@@ -4,17 +4,18 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 
 dotenvConfig({ path: '.env' });
 
-const config = {
+const config: DataSourceOptions = {
   type: 'mysql',
   host: `${process.env.DB_HOST}`,
-  port: `${process.env.DB_PORT || 3306}`,
+  port: Number(process.env.DB_PORT) || 3306,
   username: `${process.env.DB_USERNAME}`,
   password: `${process.env.DB_PASSWORD}`,
   database: `${process.env.DB_NAME}`,
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/db/migrations/*{.ts,.js}'],
-  autoLoadEntities: true,
+  // autoLoadEntities: true,
   synchronize: false,
+  logging: true,
 };
 
 export default registerAs('typeorm', () => config);
