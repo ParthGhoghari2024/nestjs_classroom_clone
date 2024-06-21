@@ -54,11 +54,13 @@ export class AuthController {
 
     if (userIfRightCredentials === false)
       return generalJsonResponse(res, { success: 0, emailPasswordError: 1 });
+
     const accessToken: string = await this.jwtService.signAsync({
       id: userIfRightCredentials.id,
       username: userIfRightCredentials.username,
       email: userIfRightCredentials.email,
       roleId: userIfRightCredentials.roleId,
+      role: userIfRightCredentials.role.role,
     });
 
     res.cookie('access_token', accessToken);

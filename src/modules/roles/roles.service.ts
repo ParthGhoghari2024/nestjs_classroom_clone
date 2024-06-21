@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateRoleDto } from './dto/createRole.dto';
 import { UpdateRoleDto } from './dto/updateRole.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,9 +11,21 @@ export class RolesService {
     @InjectRepository(Role)
     private readonly rolesRepository: Repository<Role>,
   ) {}
+
+  private readonly logger: Logger = new Logger(RolesService.name);
+
   // @InjectRepository(Role)
   // private readonly rolesRepository: Repository<Role>;
 
+  async getRoleByUserId(usreId: number) {
+    try {
+      return await this.rolesRepository.findOne({
+        where: {
+          id: usreId,
+        },
+      });
+    } catch (error) {}
+  }
   create(createRoleDto: CreateRoleDto) {
     return 'This action adds a new role';
   }

@@ -41,6 +41,10 @@ import {
 import { Assignment } from './entities/assignment.entity';
 import { ClassesService } from '../classes/classes.service';
 import { UpdateResult } from 'typeorm';
+import { RolesEnum } from 'src/types/constants';
+import { Class } from '../classes/entities/class.entity';
+import { IId } from 'src/types/interface';
+import { Request } from 'express';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -59,12 +63,25 @@ export class AssignmentsController {
   async create(
     @Body() createAssignmentDto: CreateAssignmentDto,
     @Res() res: Response,
-    @Req() req,
+    @Req() req: Request,
   ) {
     try {
       const userId: number = req.user.id || 1; //TODO:
 
-      const classExists = await this.classesService.getClassIdIfExists(
+      const userRole: string = req.user.role;
+
+      if (userRole != RolesEnum.Teacher) {
+        return generalJsonResponse(
+          res,
+          { success: 0, roleError: 1 },
+          '',
+          'error',
+          false,
+          403,
+        );
+      }
+
+      const classExists: Class = await this.classesService.getClassIdIfExists(
         createAssignmentDto.classId,
       );
 

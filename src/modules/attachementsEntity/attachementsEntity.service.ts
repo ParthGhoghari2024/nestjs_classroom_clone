@@ -61,6 +61,7 @@ export class AttachementsEntityService {
         newAttach.new_filename = attachement.new_filename;
         newAttach.path = attachement.path;
         newAttach.attachmentId = assignment.id;
+        newAttach.userId = userId;
         attachements.push(newAttach);
       });
 
@@ -98,6 +99,7 @@ export class AttachementsEntityService {
         newAttach.new_filename = attachement.new_filename;
         newAttach.path = attachement.path;
         newAttach.attachmentId = submission.id;
+        newAttach.userId = userId;
         attachements.push(newAttach);
       });
 
@@ -143,9 +145,7 @@ export class AttachementsEntityService {
         id: attachementId,
       },
       relations: {
-        assignmentAttachment:{
-          
-        },
+        assignmentAttachment: {},
         submissionAttachment: true,
       },
     });

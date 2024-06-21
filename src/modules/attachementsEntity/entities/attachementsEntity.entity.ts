@@ -1,5 +1,6 @@
 import { Assignment } from 'src/modules/assignments/entities/assignment.entity';
 import { Submission } from 'src/modules/submissions/entities/submission.entity';
+import { User } from 'src/modules/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -18,6 +19,13 @@ export class AttachmentsEntity {
 
   @Column()
   attachmentId: number;
+
+  @Column()
+  userId: number;
+
+  @ManyToOne(() => User, (user) => user.attachments)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @ManyToOne(() => Assignment, (assignment) => assignment.attachments, {
     nullable: true,

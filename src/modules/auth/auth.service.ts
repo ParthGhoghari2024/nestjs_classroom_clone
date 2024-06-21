@@ -30,10 +30,18 @@ export class AuthService {
           email: loginDto.email,
         },
         select: {
+          id: true,
           username: true,
           email: true,
           roleId: true,
           password: true,
+          role: {
+            id: true,
+            role: true,
+          },
+        },
+        relations: {
+          role: true,
         },
       });
 

@@ -1,4 +1,5 @@
 import { Assignment } from 'src/modules/assignments/entities/assignment.entity';
+import { AttachmentsEntity } from 'src/modules/attachementsEntity/entities/attachementsEntity.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
 import { Role } from 'src/modules/roles/entities/role.entity';
 import { StudentClasses } from 'src/modules/studentClass/entities/studentClass.entity';
@@ -73,4 +74,9 @@ export class User {
 
   @OneToMany(() => Submission, (submission) => submission.student)
   submissions: Submission[];
+
+  @OneToMany(() => AttachmentsEntity, (attachement) => attachement.user, {
+    cascade: true,
+  })
+  attachments: AttachmentsEntity[];
 }
