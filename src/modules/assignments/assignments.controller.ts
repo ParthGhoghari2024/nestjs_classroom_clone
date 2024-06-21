@@ -40,6 +40,7 @@ import {
 } from '@nestjs/swagger';
 import { Assignment } from './entities/assignment.entity';
 import { ClassesService } from '../classes/classes.service';
+import { UpdateResult } from 'typeorm';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -61,9 +62,7 @@ export class AssignmentsController {
     @Req() req,
   ) {
     try {
-      console.log(req.user);
-
-      const userId: number = 1; //TODO:
+      const userId: number = req.user.id || 1; //TODO:
 
       const classExists = await this.classesService.getClassIdIfExists(
         createAssignmentDto.classId,
@@ -105,16 +104,54 @@ export class AssignmentsController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateAssignmentDto: UpdateAssignmentDto,
+    @Res() res,
   ) {
-    return this.assignmentsService.update(+id, updateAssignmentDto);
+    try {
+      const updateResult: UpdateResult = await this.assignmentsService.update(
+        +id,
+        updateAssignmentDto,
+      );
+
+      if (updateResult && updateResult.affected !== 0)
+        return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.assignmentsService.remove(+id);
+  async remove(@Param('id') id: string, @Res() res) {
+    try {
+      const deleteResult: UpdateResult =
+        await this.assignmentsService.remove(+id);
+
+      if (deleteResult) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @ApiConsumes('multipart/form-data')
@@ -122,9 +159,6 @@ export class AssignmentsController {
     schema: {
       type: 'object',
       properties: {
-        // assignmentId: {
-        //   type: 'number',
-        // },
         classId: {
           type: 'number',
         },
@@ -215,6 +249,47 @@ export class AssignmentsController {
         return generalJsonResponse(res, {
           success: 1,
           result: attachementMetaData,
+        });
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        400,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
+  }
+
+  @Delete('/attachment/:id')
+  async removeAttachementFile(
+    // @Param('assignementId') assignementId: string,
+    @Param('id') id: string,
+    @Res() res,
+  ) {
+    try {
+      const attachement: AttachmentsEntity =
+        await this.assignmentsService.getAttachementByAttachementId(+id);
+
+      if (!attachement) {
+        return generalJsonResponse(res, { success: 0, attachementError: 1 });
+      }
+
+      if (
+        !attachement.assignmentAttachment ||
+        !attachement.assignmentAttachment.id
+      ) {
+        return generalJsonResponse(res, { success: 0, assignementError: 1 });
+      }
+
+      const deleteResult: UpdateResult =
+        await this.assignmentsService.removeAttachement(+id);
+      if (deleteResult)
+        return generalJsonResponse(res, {
+          success: 1,
         });
       return generalJsonResponse(
         res,

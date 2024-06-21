@@ -35,7 +35,7 @@ import { UpdateResult } from 'typeorm';
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
-  private logger = new Logger(ClassesController.name);
+  private logger: Logger = new Logger(ClassesController.name);
   @Post()
   @ApiOperation({ summary: 'Create class' })
   async create(@Body() createClassDto: CreateClassDto) {
@@ -90,7 +90,7 @@ export class ClassesController {
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res) {
     try {
-      const deleteResult: UpdateResult = await this.classesService.remove(+id);
+      const deleteResult: Class = await this.classesService.remove(+id);
 
       if (deleteResult) return generalJsonResponse(res, { success: 1 });
       else

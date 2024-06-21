@@ -37,8 +37,8 @@ export class AuthController {
     private readonly jwtService: JwtService,
   ) {}
 
-  private readonly logger = new Logger(AuthController.name);
-  private readonly SALT = process.env.SALT;
+  private readonly logger: Logger = new Logger(AuthController.name);
+  private readonly SALT: string = process.env.SALT;
 
   @Post('/login')
   @ApiConsumes('application/x-www-form-urlencoded')

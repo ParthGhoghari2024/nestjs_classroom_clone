@@ -29,7 +29,7 @@ export class Assignment {
   title: string;
 
   @Column()
-  descrption: string;
+  description: string;
 
   @Column()
   dueDate: Date;

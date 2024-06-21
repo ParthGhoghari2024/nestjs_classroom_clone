@@ -1,6 +1,8 @@
 import { existsSync, mkdirSync } from 'fs';
 import { Multer, diskStorage } from 'multer';
 import { Request } from 'express';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { extname } from 'path';
 // Multer configuration
 export const multerConfig = {
   assignementDest: process.env.UPLOAD_LOCATION_ASSIGNMENT,
@@ -15,19 +17,19 @@ export const multerOptions = {
   },
   // Check the mimetypes to allow for upload
   fileFilter: (req: Request, file: Express.Multer.File, cb: any) => {
-    // if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-    //   // Allow storage of file
-    //   cb(null, true);
-    // } else {
-    //   // Reject file
-    //   cb(
-    //     new HttpException(
-    //       `Unsupported file type ${extname(file.originalname)}`,
-    //       HttpStatus.BAD_REQUEST,
-    //     ),
-    //     false,
-    //   );
-    // }
+    if (file.mimetype.match(/\/(jpg|jpeg|png|gif|csv|pdf)$/)) {
+      // Allow storage of file
+      cb(null, true);
+    } else {
+      // Reject file
+      cb(
+        new HttpException(
+          `Unsupported file type ${extname(file.originalname)}`,
+          HttpStatus.BAD_REQUEST,
+        ),
+        false,
+      );
+    }
     cb(null, true);
   },
   // Storage properties

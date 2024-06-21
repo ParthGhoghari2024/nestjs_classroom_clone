@@ -3,7 +3,7 @@ import { CreateAssignmentDto } from './dto/createAssignment.dto';
 import { UpdateAssignmentDto } from './dto/updateAssignment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assignment } from './entities/assignment.entity';
-import { Repository } from 'typeorm';
+import { NumericType, Repository } from 'typeorm';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
@@ -25,7 +25,7 @@ export class AssignmentsService {
     assignment.classId = createAssignmentDto.classId;
     assignment.teacherId = userId;
     assignment.title = createAssignmentDto.title;
-    assignment.descrption = createAssignmentDto.description;
+    assignment.description = createAssignmentDto.description;
     assignment.dueDate = createAssignmentDto.dueDate;
     return await this.assignmentRepository.save(assignment);
   }
@@ -80,7 +80,7 @@ export class AssignmentsService {
           email: true,
         },
         title: true,
-        descrption: true,
+        description: true,
         dueDate: true,
       },
       relations: {
@@ -107,7 +107,7 @@ export class AssignmentsService {
           email: true,
         },
         title: true,
-        descrption: true,
+        description: true,
         dueDate: true,
         attachments: {
           path: true,
@@ -121,17 +121,33 @@ export class AssignmentsService {
     });
   }
 
-  update(id: number, updateAssignmentDto: UpdateAssignmentDto) {
-    return `This action updates a #${id} assignment`;
+  async update(id: number, updateAssignmentDto: UpdateAssignmentDto) {
+    return await this.assignmentRepository.update(id, updateAssignmentDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} assignment`;
+  async remove(id: number) {
+    return await this.assignmentRepository.softDelete(id);
   }
 
   async createBulkWithAttachement(assignments: Assignment) {
     try {
       return await this.assignmentRepository.save(assignments);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async removeAttachement(id: number) {
+    try {
+      return await this.attachementsEntityService.remove(id);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async getAttachementByAttachementId(id: number) {
+    try {
+      return await this.attachementsEntityService.findOneWithRelations(id);
     } catch (error) {
       this.logger.error(error);
     }

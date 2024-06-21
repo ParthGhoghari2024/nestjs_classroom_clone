@@ -36,22 +36,22 @@ export class Class {
   deletedAt: Date;
 
   @OneToMany(() => Assignment, (assignment) => assignment.class, {
-    cascade: ['insert', 'update', 'remove', 'soft-remove'],
+    cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
   })
   assignments: Assignment[];
 
   @OneToMany(() => StudentClasses, (studentClass) => studentClass.class, {
-    cascade: ['insert', 'update', 'remove', 'soft-remove'],
+    cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
   })
   students: StudentClasses[];
 
   @OneToMany(() => TeacherClasses, (teacherClass) => teacherClass.class, {
-    cascade: ['insert', 'update', 'remove', 'soft-remove'],
+    cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
   })
   teachers: TeacherClasses[];
 
   @OneToMany(() => Submission, (submission) => submission.class, {
-    cascade: ['insert', 'update', 'remove', 'soft-remove'],
+    cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
   })
   submissions: Submission[];
 }

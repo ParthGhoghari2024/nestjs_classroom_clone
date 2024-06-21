@@ -73,7 +73,7 @@ export class ClassesService {
           teachers: true,
           assignments: {
             title: true,
-            descrption: true,
+            description: true,
             dueDate: true,
             teacher: {
               id: true,
@@ -123,7 +123,7 @@ export class ClassesService {
           },
           assignments: {
             title: true,
-            descrption: true,
+            description: true,
             dueDate: true,
             teacher: {
               id: true,
@@ -155,7 +155,13 @@ export class ClassesService {
 
   async remove(id: number) {
     try {
-      return await this.classesRepository.softDelete(id);
+      const classEntity: Class = await this.classesRepository.findOne({
+        where: { id },
+        relations: {
+          assignments: true,
+        },
+      });
+      return await this.classesRepository.softRemove(classEntity);
     } catch (error) {
       this.logger.error(error);
     }
@@ -163,7 +169,15 @@ export class ClassesService {
 
   async restore(id: number) {
     try {
-      return await this.classesRepository.restore(id);
+      const classEntity: Class = await this.classesRepository.findOne({
+        where: { id },
+        relations: {
+          assignments: true,
+        },
+        withDeleted: true,
+      });
+
+      return await this.classesRepository.recover(classEntity);
     } catch (error) {
       this.logger.error(error);
     }
@@ -309,7 +323,7 @@ export class ClassesService {
       addClassWithAssignments.assignments.map(async (assignment) => {
         const newAssignement = new Assignment();
         newAssignement.title = assignment.title;
-        newAssignement.descrption = assignment.description;
+        newAssignement.description = assignment.description;
         newAssignement.dueDate = assignment.dueDate;
         newAssignement.teacherId = userId;
 

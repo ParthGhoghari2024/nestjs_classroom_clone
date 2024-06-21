@@ -137,11 +137,25 @@ export class AttachementsEntityService {
     });
   }
 
+  async findOneWithRelations(attachementId: number) {
+    return await this.attachementsService.findOne({
+      where: {
+        id: attachementId,
+      },
+      relations: {
+        assignmentAttachment:{
+          
+        },
+        submissionAttachment: true,
+      },
+    });
+  }
+
   update(id: number, updateAttachementsEntityDto: UpdateAttachementsEntityDto) {
     return `This action updates a #${id} attachementsEntity`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} attachementsEntity`;
+  async remove(id: number) {
+    return await this.attachementsService.softDelete(id);
   }
 }
