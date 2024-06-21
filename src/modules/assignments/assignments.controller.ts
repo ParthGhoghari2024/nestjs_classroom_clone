@@ -13,6 +13,7 @@ import {
   Res,
   Logger,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { CreateAssignmentDto } from './dto/createAssignment.dto';
@@ -38,21 +39,59 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Assignment } from './entities/assignment.entity';
+import { ClassesService } from '../classes/classes.service';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @ApiTags('assignment')
 @Controller('assignment')
 export class AssignmentsController {
-  constructor(private readonly assignmentsService: AssignmentsService) {}
+  constructor(
+    private readonly assignmentsService: AssignmentsService,
+
+    private readonly classesService: ClassesService,
+  ) {}
 
   private readonly logger: Logger = new Logger(AssignmentsController.name);
   @Post()
   @ApiOperation({ summary: 'post assignments' })
-  create(@Body() createAssignmentDto: CreateAssignmentDto) {
-    const userId: number = 1; //TODO:
-    createAssignmentDto.dueDate = new Date(createAssignmentDto.dueDate);
-    return this.assignmentsService.create(createAssignmentDto, userId);
+  async create(
+    @Body() createAssignmentDto: CreateAssignmentDto,
+    @Res() res: Response,
+    @Req() req,
+  ) {
+    try {
+      console.log(req.user);
+
+      const userId: number = 1; //TODO:
+
+      const classExists = await this.classesService.getClassIdIfExists(
+        createAssignmentDto.classId,
+      );
+
+      if (!classExists || !classExists.id) {
+        return generalJsonResponse(res, { success: 0, classIdError: 1 });
+      }
+      createAssignmentDto.dueDate = new Date(createAssignmentDto.dueDate);
+      const assignment = await this.assignmentsService.create(
+        createAssignmentDto,
+        userId,
+      );
+
+      if (assignment) return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @Get()
@@ -83,8 +122,20 @@ export class AssignmentsController {
     schema: {
       type: 'object',
       properties: {
-        assignmentId: {
+        // assignmentId: {
+        //   type: 'number',
+        // },
+        classId: {
           type: 'number',
+        },
+        title: {
+          type: 'string',
+        },
+        description: {
+          type: 'string',
+        },
+        dueDate: {
+          type: 'date',
         },
         files: {
           type: 'array',
@@ -121,7 +172,7 @@ export class AssignmentsController {
         files.files &&
         files.files.forEach((file: Express.Multer.File) => {
           const attachementsFileDetail: CreateAttachementsEntityDto = {
-            attachmentId: uploadAssignmentDto.assignmentId,
+            // attachmentId: uploadAssignmentDto.assignmentId,
             attachmentType: 'assignment',
             original_filename: file.originalname,
             new_filename: file.filename,
@@ -134,6 +185,8 @@ export class AssignmentsController {
       const createAttachementsMetaData =
         await this.assignmentsService.addAttachementMetadata(
           attachementsFileDetailArray,
+          uploadAssignmentDto,
+          userId,
         );
 
       if (createAttachementsMetaData)

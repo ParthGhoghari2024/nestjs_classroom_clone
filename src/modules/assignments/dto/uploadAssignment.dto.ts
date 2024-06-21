@@ -5,35 +5,37 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UploadAssignmentDto {
+  // // @IsNumber()
+  // @Type(() => Number)
+  // assignmentId: number;
+  @ApiProperty({
+    example: 'test',
+    required: true,
+  })
   // @IsNumber()
-  @Type(() => Number)
-  assignmentId: number;
-  // @ApiProperty({
-  //   example: 'test',
-  //   required: true,
-  // })
-  // @IsNumber()
-  // classId: number;
+  classId: number;
+
   // @IsNumber()
   // @IsOptional()
   // @IsNotEmpty()
   // teacherId?: number;
-  // @ApiProperty({
-  //   example: 'test',
-  //   required: true,
-  // })
-  // @IsString()
-  // title: string;
-  // @ApiProperty({
-  //   example: 'test',
-  //   required: true,
-  // })
-  // @IsString()
-  // description: string;
-  // @ApiProperty({
-  //   example: '2024-06-20',
-  //   required: true,
-  // })
-  // @IsString()
-  // dueDate: Date;
+
+  @ApiProperty({
+    example: 'test',
+    required: true,
+  })
+  @IsString()
+  title: string;
+  @ApiProperty({
+    example: 'test',
+    required: true,
+  })
+  @IsString()
+  description: string;
+  @ApiProperty({
+    example: '2024-06-20',
+    required: true,
+  })
+  @IsString()
+  dueDate: Date;
 }

@@ -19,7 +19,7 @@ import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Submission } from './entities/submission.entity';
 import { UpdateResult } from 'typeorm';
 import { AuthGuard } from '../auth/auth.guard';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from 'src/utils/multerOptions.utils';
 import { UploadSubmissionDto } from './dto/uploadSubmission.dto';
@@ -137,7 +137,27 @@ export class SubmissionsController {
       return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
     }
   }
-
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        classId: {
+          type: 'number',
+        },
+        submission: {
+          type: 'string',
+        },
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
   @Post('/upload/:id')
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -163,7 +183,7 @@ export class SubmissionsController {
         files.files &&
         files.files.forEach((file: Express.Multer.File) => {
           const attachementsFileDetail: CreateAttachementsEntityDto = {
-            attachmentId: uploadSubmissionDto.submissionId,
+            // attachmentId: uploadSubmissionDto.submissionId, //TODO:
             attachmentType: 'submission',
             original_filename: file.originalname,
             new_filename: file.filename,
@@ -173,9 +193,11 @@ export class SubmissionsController {
           attachementsFileDetailArray.push(attachementsFileDetail);
         });
 
-      const createAttachementsMetaData =
+      const createAttachementsMetaData: Submission =
         await this.submissionsService.addAttachementMetadata(
           attachementsFileDetailArray,
+          uploadSubmissionDto,
+          userId,
         );
 
       if (createAttachementsMetaData)

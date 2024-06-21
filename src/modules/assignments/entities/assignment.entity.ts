@@ -45,6 +45,9 @@ export class Assignment {
   @OneToMany(
     () => AttachmentsEntity,
     (attachment) => attachment.assignmentAttachment,
+    {
+      cascade: true,
+    },
   )
   attachments: AttachmentsEntity[];
 

@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateAssignmentDto {
   @ApiProperty({
-    example: 'test',
+    example: 1,
     required: true,
   })
   @IsNumber()

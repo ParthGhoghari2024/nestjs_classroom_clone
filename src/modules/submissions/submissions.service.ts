@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { CreateSubmissionDto } from './dto/createSubmission.dto';
 import { UpdateSubmissionDto } from './dto/updateSubmission.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,12 +7,15 @@ import { Repository } from 'typeorm';
 import { CreateAssignmentDto } from '../assignments/dto/createAssignment.dto';
 import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
+import { UploadSubmissionDto } from './dto/uploadSubmission.dto';
 
 @Injectable()
 export class SubmissionsService {
   constructor(
     @InjectRepository(Submission)
     private readonly submissionRepository: Repository<Submission>,
+
+    @Inject(forwardRef(() => AttachementsEntityService))
     private readonly attachementsEntityService: AttachementsEntityService,
   ) {}
 
@@ -67,10 +70,14 @@ export class SubmissionsService {
 
   async addAttachementMetadata(
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+    uploadSubmissionDto: UploadSubmissionDto,
+    userId: number,
   ) {
     try {
-      return await this.attachementsEntityService.createBulk(
+      return await this.attachementsEntityService.createBulkSubmissions(
         createAttachementsEntityDtos,
+        uploadSubmissionDto,
+        userId,
       );
     } catch (error) {
       this.logger.error(error);
@@ -92,6 +99,14 @@ export class SubmissionsService {
           attachments: true,
         },
       });
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async createBulkWithAttachement(submissions: Submission) {
+    try {
+      return await this.submissionRepository.save(submissions);
     } catch (error) {
       this.logger.error(error);
     }

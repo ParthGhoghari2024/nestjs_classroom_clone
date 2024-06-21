@@ -11,6 +11,7 @@ import { AssignmentsModule } from './modules/assignments/assignments.module';
 import { TeacherClassesModule } from './modules/teacherClass/teacherClasses.module';
 import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AttachementsEntityModule } from './modules/attachementsEntity/attachementsEntity.module';
 ConfigModule.forRoot({
   isGlobal: true,
 });
@@ -30,6 +31,7 @@ ConfigModule.forRoot({
     ClassesModule,
     RolesModule,
     AssignmentsModule,
+    AttachementsEntityModule,
     TeacherClassesModule,
     SubmissionsModule,
     AuthModule,

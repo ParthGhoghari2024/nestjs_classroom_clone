@@ -7,6 +7,8 @@ import { Repository } from 'typeorm';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
+import { UploadAssignmentDto } from './dto/uploadAssignment.dto';
+import { UploadSubmissionDto } from '../submissions/dto/uploadSubmission.dto';
 
 @Injectable()
 export class AssignmentsService {
@@ -18,22 +20,26 @@ export class AssignmentsService {
   ) {}
 
   private logger: Logger = new Logger(AssignmentsService.name);
-  create(createAssignmentDto: CreateAssignmentDto, userId: number) {
+  async create(createAssignmentDto: CreateAssignmentDto, userId: number) {
     const assignment = new Assignment();
     assignment.classId = createAssignmentDto.classId;
     assignment.teacherId = userId;
     assignment.title = createAssignmentDto.title;
     assignment.descrption = createAssignmentDto.description;
     assignment.dueDate = createAssignmentDto.dueDate;
-    return this.assignmentRepository.save(assignment);
+    return await this.assignmentRepository.save(assignment);
   }
 
   async addAttachementMetadata(
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+    uploadAssignmentDto: UploadAssignmentDto,
+    userId: number,
   ) {
     try {
-      return await this.attachementsEntityService.createBulk(
+      return await this.attachementsEntityService.createBulkAssignements(
         createAttachementsEntityDtos,
+        uploadAssignmentDto,
+        userId,
       );
     } catch (error) {
       this.logger.error(error);
@@ -121,5 +127,13 @@ export class AssignmentsService {
 
   remove(id: number) {
     return `This action removes a #${id} assignment`;
+  }
+
+  async createBulkWithAttachement(assignments: Assignment) {
+    try {
+      return await this.assignmentRepository.save(assignments);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }

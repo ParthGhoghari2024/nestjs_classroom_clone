@@ -23,14 +23,15 @@ import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { RegisterTeacherAndAddToClass } from '../auth/dto/registerTeacherAddToClass.dto';
 import { AddClassWithAssignments } from './dto/addClassWithAssignments.dto';
 import { Assignment } from '../assignments/entities/assignment.entity';
+import { AssignmentsService } from '../assignments/assignments.service';
 @Injectable()
 export class ClassesService {
   constructor(
     @InjectRepository(Class)
     private readonly classesRepository: Repository<Class>,
 
-    private readonly userRepository: UsersService,
-    private readonly authRepository: AuthService,
+    private readonly userService: UsersService,
+    private readonly authService: AuthService,
 
     private readonly teacherClassesService: TeacherClassesService,
     private entityManager: EntityManager,
@@ -179,7 +180,7 @@ export class ClassesService {
         },
       });
 
-      const teacherResult: User = await this.userRepository.findOne(teacherId);
+      const teacherResult: User = await this.userService.findOne(teacherId);
 
       const teacherClass: TeacherClasses = new TeacherClasses();
       teacherClass.classId = classId;
@@ -204,7 +205,7 @@ export class ClassesService {
         },
       });
 
-      const studentResult: User = await this.userRepository.findOne(studentId);
+      const studentResult: User = await this.userService.findOne(studentId);
 
       const studentClass: StudentClasses = new StudentClasses();
       studentClass.classId = classId;
@@ -248,7 +249,7 @@ export class ClassesService {
           throw Error('Wrong Uid');
         }
 
-        const newTeacher: User = await this.authRepository.register(
+        const newTeacher: User = await this.authService.register(
           registerObj,
           'teacher',
         );
@@ -318,6 +319,18 @@ export class ClassesService {
       newClass.assignments = assignmentsArray;
 
       return await this.classesRepository.save(newClass);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async getClassIdIfExists(id: number) {
+    try {
+      return await this.classesRepository.findOne({
+        where: {
+          id,
+        },
+      });
     } catch (error) {
       this.logger.error(error);
     }

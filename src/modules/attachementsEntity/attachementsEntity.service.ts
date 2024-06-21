@@ -1,15 +1,30 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { CreateAttachementsEntityDto } from './dto/createAttachementsEntity.dto';
 import { UpdateAttachementsEntityDto } from './dto/updateAttachementsEntity.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AttachmentsEntity } from './entities/attachementsEntity.entity';
-import { Repository } from 'typeorm';
+import { Repository, Transaction } from 'typeorm';
+import { Assignment } from '../assignments/entities/assignment.entity';
+import { UploadAssignmentDto } from '../assignments/dto/uploadAssignment.dto';
+import { UploadSubmissionDto } from '../submissions/dto/uploadSubmission.dto';
+import { AssignmentsService } from '../assignments/assignments.service';
+import { CreateAssignmentDto } from '../assignments/dto/createAssignment.dto';
+import { CreateSubmissionDto } from '../submissions/dto/createSubmission.dto';
+import { SubmissionsService } from '../submissions/submissions.service';
+import { privateDecrypt } from 'crypto';
+import { Submission } from '../submissions/entities/submission.entity';
 
 @Injectable()
 export class AttachementsEntityService {
   constructor(
     @InjectRepository(AttachmentsEntity)
     private attachementsService: Repository<AttachmentsEntity>,
+
+    @Inject(forwardRef(() => AssignmentsService))
+    private assignmentsService: AssignmentsService,
+
+    @Inject(forwardRef(() => SubmissionsService))
+    private submissionsService: SubmissionsService,
   ) {}
   private readonly logger = new Logger(AttachementsEntityService.name);
   async create(createAttachementsEntityDto: CreateAttachementsEntityDto) {
@@ -20,11 +35,77 @@ export class AttachementsEntityService {
     }
   }
 
-  async createBulk(
+  async createBulkAssignements(
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+    uploadAssignmentDto: UploadAssignmentDto,
+    userId: number,
   ) {
     try {
-      return await this.attachementsService.save(createAttachementsEntityDtos);
+      const createAssignmentDto: CreateAssignmentDto =
+        new CreateAssignmentDto();
+      createAssignmentDto.classId = uploadAssignmentDto.classId;
+      createAssignmentDto.description = uploadAssignmentDto.description;
+      createAssignmentDto.title = uploadAssignmentDto.title;
+      createAssignmentDto.dueDate = uploadAssignmentDto.dueDate;
+
+      const assignment: Assignment = await this.assignmentsService.create(
+        createAssignmentDto,
+        userId,
+      );
+
+      const attachements: AttachmentsEntity[] = [];
+      createAttachementsEntityDtos.forEach((attachement) => {
+        const newAttach: AttachmentsEntity = new AttachmentsEntity();
+        newAttach.attachmentType = attachement.attachmentType;
+        newAttach.original_filename = attachement.original_filename;
+        newAttach.new_filename = attachement.new_filename;
+        newAttach.path = attachement.path;
+        newAttach.attachmentId = assignment.id;
+        attachements.push(newAttach);
+      });
+
+      assignment.attachments = attachements;
+
+      return await this.assignmentsService.createBulkWithAttachement(
+        assignment,
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async createBulkSubmissions(
+    createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+    uploadSubmissionDto: UploadSubmissionDto,
+    userId: number,
+  ) {
+    try {
+      const createSubmissionDto: CreateSubmissionDto =
+        new CreateSubmissionDto();
+      createSubmissionDto.classId = uploadSubmissionDto.classId;
+      createSubmissionDto.submission = uploadSubmissionDto.submission;
+
+      const submission: Submission = await this.submissionsService.create(
+        createSubmissionDto,
+        userId,
+      );
+
+      const attachements: AttachmentsEntity[] = [];
+      createAttachementsEntityDtos.forEach((attachement) => {
+        const newAttach: AttachmentsEntity = new AttachmentsEntity();
+        newAttach.attachmentType = attachement.attachmentType;
+        newAttach.original_filename = attachement.original_filename;
+        newAttach.new_filename = attachement.new_filename;
+        newAttach.path = attachement.path;
+        newAttach.attachmentId = submission.id;
+        attachements.push(newAttach);
+      });
+
+      submission.attachments = attachements;
+
+      return await this.submissionsService.createBulkWithAttachement(
+        submission,
+      );
     } catch (error) {
       this.logger.error(error);
     }

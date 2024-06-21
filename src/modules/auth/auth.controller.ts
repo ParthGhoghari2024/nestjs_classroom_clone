@@ -24,6 +24,7 @@ import { RegisterTeacherAndAddToClass } from './dto/registerTeacherAddToClass.dt
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { ApiBody, ApiConsumes, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { TeacherClasses } from '../teacherClass/entities/teacherClass.entity';
 
 @Controller('')
 @ApiTags('auth')
@@ -54,6 +55,7 @@ export class AuthController {
     if (userIfRightCredentials === false)
       return generalJsonResponse(res, { success: 0, emailPasswordError: 1 });
     const accessToken: string = await this.jwtService.signAsync({
+      id: userIfRightCredentials.id,
       username: userIfRightCredentials.username,
       email: userIfRightCredentials.email,
       roleId: userIfRightCredentials.roleId,
@@ -97,6 +99,14 @@ export class AuthController {
     }
   }
 
+  @Get('/logout')
+  async logout(@Res() res: Response) {
+    try {
+      return res.clearCookie('access_token').send();
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
   @Post('/register/teacher/addToClass')
   async registerTeacherAndAddToClass(
     @Body() registerTeacherAndAddToClass: RegisterTeacherAndAddToClass,
@@ -113,7 +123,7 @@ export class AuthController {
         return;
       }
 
-      const registerTeacherAndAddToClassResult =
+      const registerTeacherAndAddToClassResult: false | TeacherClasses[] =
         await this.classesServices.createTeacherAddToClass(
           registerTeacherAndAddToClass,
         );
