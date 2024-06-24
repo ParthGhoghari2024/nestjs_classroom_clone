@@ -14,6 +14,8 @@ import {
   Logger,
   UseGuards,
   Req,
+  UsePipes,
+  Query,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { CreateAssignmentDto } from './dto/createAssignment.dto';
@@ -44,6 +46,7 @@ import { UpdateResult } from 'typeorm';
 import { RolesEnum } from 'src/types/constants';
 import { Class } from '../classes/entities/class.entity';
 import { Request } from 'express';
+import { ValidateAssignmentOwnerGuard } from './assignments.guard';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -63,7 +66,7 @@ export class AssignmentsController {
     @Body() createAssignmentDto: CreateAssignmentDto,
     @Res() res: Response,
     @Req() req: Request,
-  ) {
+  ): Promise<Response> {
     try {
       const userId: number = req.user.id || 1; //TODO:
 
@@ -110,13 +113,60 @@ export class AssignmentsController {
   }
 
   @Get()
-  findAll() {
-    return this.assignmentsService.findAll();
+  async findAll(@Res() res: Response): Promise<Response> {
+    try {
+      const assignments = await this.assignmentsService.findAll();
+
+      if (assignments)
+        return generalJsonResponse(res, { success: 1, result: assignments });
+
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        400,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        500,
+      );
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.assignmentsService.findOne(+id);
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const assignment: Assignment = await this.assignmentsService.findOne(+id);
+
+      if (assignment)
+        return generalJsonResponse(res, { success: 1, result: assignment });
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        400,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        500,
+      );
+    }
   }
 
   @Patch(':id')
@@ -234,7 +284,7 @@ export class AssignmentsController {
         });
 
       const createAttachementsMetaData: Assignment =
-        await this.assignmentsService.addAttachementMetadata(
+        await this.assignmentsService.addNewAttachementMetadata(
           attachementsFileDetailArray,
           uploadAssignmentDto,
           userId,
@@ -257,6 +307,81 @@ export class AssignmentsController {
     }
   }
 
+  @UseGuards(ValidateAssignmentOwnerGuard)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
+  @Post('/attachment/:id')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        {
+          name: 'files',
+          maxCount: 10,
+        },
+      ],
+      multerOptions('assignment'),
+    ),
+  )
+  async addAttachemtent(
+    @Param('id') id: string,
+    @UploadedFiles() files,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    try {
+      const userId: number = req.user.id || 1; //TODO:
+      const attachementId: number = +id;
+      const attachementsFileDetailArray: CreateAttachementsEntityDto[] = [];
+      files &&
+        files.files &&
+        files.files.forEach((file: Express.Multer.File) => {
+          const attachementsFileDetail: CreateAttachementsEntityDto = {
+            // attachmentId: uploadAssignmentDto.assignmentId,
+            attachmentType: 'assignment',
+            original_filename: file.originalname,
+            new_filename: file.filename,
+            path: file.path,
+          };
+
+          attachementsFileDetailArray.push(attachementsFileDetail);
+        });
+
+      const createAttachementsMetaData: Assignment =
+        await this.assignmentsService.addAttachementForOldAssignement(
+          attachementsFileDetailArray,
+          attachementId,
+          userId,
+        );
+
+      if (createAttachementsMetaData)
+        return generalJsonResponse(res, { success: 1 });
+      else
+        return generalJsonResponse(
+          res,
+          { success: 0 },
+          '',
+          'error',
+          false,
+          400,
+        );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
+  }
   @Get('/attachment/metadata/:id')
   async getAttachementFile(@Param('id') id: string, @Res() res) {
     try {

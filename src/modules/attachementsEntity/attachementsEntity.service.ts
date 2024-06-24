@@ -75,6 +75,35 @@ export class AttachementsEntityService {
     }
   }
 
+  async addNewAssignementsAttachement(
+    createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+    assignementId: number,
+    userId: number,
+  ) {
+    try {
+      const assignment: Assignment =
+        await this.assignmentsService.findWithRelations(assignementId);
+
+      const attachements: AttachmentsEntity[] = [];
+      createAttachementsEntityDtos.forEach((attachement) => {
+        const newAttach: AttachmentsEntity = new AttachmentsEntity();
+        newAttach.attachmentType = attachement.attachmentType;
+        newAttach.original_filename = attachement.original_filename;
+        newAttach.new_filename = attachement.new_filename;
+        newAttach.path = attachement.path;
+        newAttach.attachmentId = assignment.id;
+        newAttach.userId = userId;
+        attachements.push(newAttach);
+      });
+
+      assignment.attachments = [...assignment.attachments, ...attachements];
+
+      return await this.assignmentsService.saveAssignment(assignment);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
   async createBulkSubmissions(
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
     uploadSubmissionDto: UploadSubmissionDto,

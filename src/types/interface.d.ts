@@ -45,3 +45,9 @@ export interface IRegisterAvailabity {
   usernameAvailabity: number;
   emailAvailabity: number;
 }
+
+export interface ILoginErrorResponse {
+  success: number;
+  emailError?: number;
+  usernameError?: number;
+}

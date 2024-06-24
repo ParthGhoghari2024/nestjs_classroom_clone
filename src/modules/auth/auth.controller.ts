@@ -18,7 +18,7 @@ import { registerDto } from './dto/register.dto';
 import argon2 from 'argon2';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { User } from '../users/entities/user.entity';
-import { IRegisterAvailabity } from 'src/types/interface';
+import { ILoginErrorResponse, IRegisterAvailabity } from 'src/types/interface';
 import { ClassesService } from '../classes/classes.service';
 import { RegisterTeacherAndAddToClass } from './dto/registerTeacherAddToClass.dto';
 import { Response } from 'express';
@@ -48,28 +48,39 @@ export class AuthController {
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const userIfRightCredentials: false | User =
-      await this.authService.checkCredentials(loginDto);
+  ): Promise<Response> {
+    try {
+      const userIfRightCredentials: false | User =
+        await this.authService.checkCredentials(loginDto);
 
-    if (userIfRightCredentials === false)
-      return generalJsonResponse(res, { success: 0, emailPasswordError: 1 });
+      if (userIfRightCredentials === false)
+        return generalJsonResponse(res, { success: 0, emailPasswordError: 1 });
 
-    const accessToken: string = await this.jwtService.signAsync({
-      id: userIfRightCredentials.id,
-      username: userIfRightCredentials.username,
-      email: userIfRightCredentials.email,
-      roleId: userIfRightCredentials.roleId,
-      role: userIfRightCredentials.role.role,
-    });
+      const accessToken: string = await this.jwtService.signAsync({
+        id: userIfRightCredentials.id,
+        username: userIfRightCredentials.username,
+        email: userIfRightCredentials.email,
+        roleId: userIfRightCredentials.roleId,
+        role: userIfRightCredentials.role.role,
+      });
 
-    res.cookie('access_token', accessToken);
+      res.cookie('access_token', accessToken);
 
-    res.json({ success: 1, temp: 1, token: accessToken });
+      res.json({ success: 1, temp: 1, token: accessToken });
+    } catch (error) {
+      this.logger.error(error);
+      res.sendStatus(500);
+    }
   }
-
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiBody({
+    type: registerDto,
+  })
   @Post('/register')
-  async register(@Body() registerDto: registerDto, @Res() res) {
+  async register(
+    @Body() registerDto: registerDto,
+    @Res() res,
+  ): Promise<Response> {
     try {
       const checkAvailabity: boolean | Response =
         await this.returnResponseIfNotAvailable(registerDto, res);
@@ -102,7 +113,7 @@ export class AuthController {
   }
 
   @Get('/logout')
-  async logout(@Res() res: Response) {
+  async logout(@Res() res: Response): Promise<Response> {
     try {
       return res.clearCookie('access_token').send();
     } catch (error) {
@@ -113,7 +124,7 @@ export class AuthController {
   async registerTeacherAndAddToClass(
     @Body() registerTeacherAndAddToClass: RegisterTeacherAndAddToClass,
     @Res() res: Response,
-  ) {
+  ): Promise<Response> {
     try {
       const checkAvailabity: boolean | Response =
         await this.returnResponseIfNotAvailable(
@@ -164,7 +175,7 @@ export class AuthController {
   async returnResponseIfNotAvailable(
     registerDto: registerDto,
     @Res() res: Response,
-  ) {
+  ): Promise<boolean | Response> {
     try {
       if (registerDto.password !== registerDto.confirmPassword) {
         return generalJsonResponse(
@@ -183,7 +194,7 @@ export class AuthController {
           registerDto.email,
         );
 
-      const response = {
+      const response: ILoginErrorResponse = {
         success: 0,
       };
 

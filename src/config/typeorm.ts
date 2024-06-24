@@ -15,7 +15,7 @@ const config: DataSourceOptions = {
   migrations: ['dist/db/migrations/*{.ts,.js}'],
   // autoLoadEntities: true,
   synchronize: false,
-  logging: true,
+  logging: false,
 };
 
 export default registerAs('typeorm', () => config);

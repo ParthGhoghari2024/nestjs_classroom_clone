@@ -30,7 +30,7 @@ export class AssignmentsService {
     return await this.assignmentRepository.save(assignment);
   }
 
-  async addAttachementMetadata(
+  async addNewAttachementMetadata(
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
     uploadAssignmentDto: UploadAssignmentDto,
     userId: number,
@@ -45,6 +45,22 @@ export class AssignmentsService {
       this.logger.error(error);
     }
   }
+  async addAttachementForOldAssignement(
+    createAttachementsEntityDtos: CreateAttachementsEntityDto[],
+    assignementId: number,
+    userId: number,
+  ) {
+    try {
+      return await this.attachementsEntityService.addNewAssignementsAttachement(
+        createAttachementsEntityDtos,
+        assignementId,
+        userId,
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
   async getAttachementMetadata(attachementId: number) {
     try {
       // return await this.attachementsEntityService.findByAttachmentId(
@@ -56,16 +72,24 @@ export class AssignmentsService {
           // attachments: true,
           // attachments: true,
         },
+        select: {
+          attachments: {
+            id: true,
+            path: true,
+            new_filename: true,
+          },
+        },
         relations: {
           attachments: true,
+          teacher: true,
         },
       });
     } catch (error) {
       this.logger.error(error);
     }
   }
-  findAll() {
-    return this.assignmentRepository.find({
+  async findAll() {
+    return await this.assignmentRepository.find({
       select: {
         id: true,
         // classId: true,
@@ -91,7 +115,7 @@ export class AssignmentsService {
   }
 
   async findOne(id: number) {
-    return this.assignmentRepository.findOne({
+    return await this.assignmentRepository.findOne({
       where: {
         id,
       },
@@ -121,6 +145,19 @@ export class AssignmentsService {
     });
   }
 
+  async findWithRelations(id: number) {
+    return await this.assignmentRepository.findOne({
+      where: {
+        id,
+      },
+      relations: {
+        class: true,
+        teacher: true,
+        attachments: true,
+      },
+    });
+  }
+
   async update(id: number, updateAssignmentDto: UpdateAssignmentDto) {
     return await this.assignmentRepository.update(id, updateAssignmentDto);
   }
@@ -132,6 +169,14 @@ export class AssignmentsService {
   async createBulkWithAttachement(assignments: Assignment) {
     try {
       return await this.assignmentRepository.save(assignments);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async saveAssignment(assignment: Assignment) {
+    try {
+      return await this.assignmentRepository.save(assignment);
     } catch (error) {
       this.logger.error(error);
     }
