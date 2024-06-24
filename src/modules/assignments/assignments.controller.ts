@@ -7,23 +7,16 @@ import {
   Param,
   Delete,
   UseInterceptors,
-  UploadedFile,
   UploadedFiles,
-  Injectable,
   Res,
   Logger,
   UseGuards,
   Req,
-  UsePipes,
-  Query,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { CreateAssignmentDto } from './dto/createAssignment.dto';
 import { UpdateAssignmentDto } from './dto/updateAssignment.dto';
-import {
-  FileFieldsInterceptor,
-  FileInterceptor,
-} from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from 'src/utils/multerOptions.utils';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { UploadAssignmentDto } from './dto/uploadAssignment.dto';
@@ -169,6 +162,7 @@ export class AssignmentsController {
     }
   }
 
+  @UseGuards(ValidateAssignmentOwnerGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -198,6 +192,7 @@ export class AssignmentsController {
     }
   }
 
+  @UseGuards(ValidateAssignmentOwnerGuard)
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res) {
     try {

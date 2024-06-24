@@ -20,29 +20,17 @@ export class ValidateAssignmentOwnerGuard implements CanActivate {
     try {
       const assignmentId: number = Number(request.params.id);
 
-      console.log(request.user);
-
       const userId: number = request.user.id;
 
       const assignmentData: Assignment =
         await this.assignmentsService.findWithRelations(assignmentId);
 
       if (assignmentData.teacherId !== userId) {
-        throw new UnauthorizedException();
+        throw new Error('Invalid ownerShip of assignment');
       }
-    } catch {
-      throw new UnauthorizedException();
+    } catch (error) {
+      throw new UnauthorizedException(error.message || '');
     }
     return true;
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
-    let [type, token] = request.headers.authorization?.split(' ') ?? [];
-
-    let tokenFromCookie: string;
-    if (request.cookies && request.cookies.access_token) {
-      tokenFromCookie = request.cookies.access_token;
-    }
-    return type === 'Bearer' ? token : tokenFromCookie;
   }
 }

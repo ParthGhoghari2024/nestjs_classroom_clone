@@ -24,6 +24,7 @@ import { RegisterTeacherAndAddToClass } from '../auth/dto/registerTeacherAddToCl
 import { AddClassWithAssignments } from './dto/addClassWithAssignments.dto';
 import { Assignment } from '../assignments/entities/assignment.entity';
 import { AssignmentsService } from '../assignments/assignments.service';
+import { RolesEnum } from 'src/types/constants';
 @Injectable()
 export class ClassesService {
   constructor(
@@ -50,6 +51,10 @@ export class ClassesService {
       newClass.UId = UId;
       newClass.userId = userId;
 
+      const teacherClass: TeacherClasses = new TeacherClasses();
+      teacherClass.userId = userId;
+
+      newClass.teachers = [teacherClass];
       return this.classesRepository.save(newClass);
     } catch (error) {
       this.logger.error(error);
@@ -150,6 +155,28 @@ export class ClassesService {
     }
   }
 
+  findWithRelations(id: number): Promise<Class> {
+    try {
+      return this.classesRepository.findOne({
+        where: {
+          id: id,
+        },
+        relations: {
+          teachers: {
+            teacher: true,
+          },
+          students: {
+            student: true,
+          },
+          assignments: {
+            teacher: true,
+          },
+        },
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
   async update(id: number, updateClassDto: UpdateClassDto) {
     return await this.classesRepository.update(id, updateClassDto);
   }
@@ -247,26 +274,31 @@ export class ClassesService {
           confirmPassword: createTeacherAddToClass.confirmPassword,
           email: createTeacherAddToClass.email,
         };
+        let classes: Class[] = [];
+        if (createTeacherAddToClass.UIds) {
+          // createTeacherAddToClass.UIds = [
+          //   ...createTeacherAddToClass.UIds,
+          //   'abc',
+          // ];
 
-        createTeacherAddToClass.UIds = [...createTeacherAddToClass.UIds, 'abc'];
+          classes = await Promise.all(
+            createTeacherAddToClass.UIds.map(async (UId) => {
+              return await this.getClassIdByUId(UId);
+            }),
+          );
 
-        const classes: Class[] = await Promise.all(
-          createTeacherAddToClass.UIds.map(async (UId) => {
-            return await this.getClassIdByUId(UId);
-          }),
-        );
-
-        const nullIds: Class[] = classes.filter(
-          (classEntity) => classEntity === null,
-        );
-        if (nullIds.length != 0) {
-          errorFlag = 1;
-          throw Error('Wrong Uid');
+          const nullIds: Class[] = classes.filter(
+            (classEntity) => classEntity === null,
+          );
+          if (nullIds.length != 0) {
+            errorFlag = 1;
+            throw Error('Wrong Uid');
+          }
         }
 
         const newTeacher: User = await this.authService.register(
           registerObj,
-          'teacher',
+          RolesEnum.Teacher,
         );
 
         newTeacherToClassArr = await Promise.all(
@@ -322,7 +354,7 @@ export class ClassesService {
 
       const assignmentsArray: Assignment[] = [];
       addClassWithAssignments.assignments.map(async (assignment) => {
-        const newAssignement = new Assignment();
+        const newAssignement: Assignment = new Assignment();
         newAssignement.title = assignment.title;
         newAssignement.description = assignment.description;
         newAssignement.dueDate = assignment.dueDate;

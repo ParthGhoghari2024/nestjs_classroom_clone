@@ -6,6 +6,7 @@ import { Class } from './entities/class.entity';
 import { UsersModule } from '../users/users.module';
 import { TeacherClassesModule } from '../teacherClass/teacherClasses.module';
 import { AuthModule } from '../auth/auth.module';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
   imports: [

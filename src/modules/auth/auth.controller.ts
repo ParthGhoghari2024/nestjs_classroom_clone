@@ -120,6 +120,7 @@ export class AuthController {
       this.logger.error(error);
     }
   }
+
   @Post('/register/teacher/addToClass')
   async registerTeacherAndAddToClass(
     @Body() registerTeacherAndAddToClass: RegisterTeacherAndAddToClass,
@@ -135,6 +136,13 @@ export class AuthController {
       if (checkAvailabity !== true) {
         return;
       }
+      const hashedpassword: string = await argon2.hash(
+        registerTeacherAndAddToClass.password,
+        {
+          secret: Buffer.from(this.SALT),
+        },
+      );
+      registerTeacherAndAddToClass.password = hashedpassword;
 
       const registerTeacherAndAddToClassResult: false | TeacherClasses[] =
         await this.classesServices.createTeacherAddToClass(
@@ -153,8 +161,8 @@ export class AuthController {
       }
 
       if (
-        registerTeacherAndAddToClassResult &&
-        registerTeacherAndAddToClassResult.length > 0
+        registerTeacherAndAddToClassResult
+        //  && registerTeacherAndAddToClassResult.length > 0
       )
         return generalJsonResponse(res, { success: 1 });
       else

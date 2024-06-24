@@ -51,3 +51,10 @@ export interface ILoginErrorResponse {
   emailError?: number;
   usernameError?: number;
 }
+export interface IPayload {
+  id: number;
+  roleId: number;
+  username: string;
+  email: string;
+  role: string;
+}

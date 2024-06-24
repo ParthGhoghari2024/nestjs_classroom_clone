@@ -29,6 +29,8 @@ import { Response, Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { UpdateResult } from 'typeorm';
 import { RolesEnum } from 'src/types/constants';
+import { IsTeacherGuard } from '../auth/isTeacher.guard';
+import { ClassGuard } from './classes.guard';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -38,6 +40,8 @@ export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
   private logger: Logger = new Logger(ClassesController.name);
+
+  @UseGuards(IsTeacherGuard)
   @Post()
   @ApiOperation({ summary: 'Create class' })
   async create(
@@ -95,6 +99,7 @@ export class ClassesController {
     return await this.classesService.findOne(+id);
   }
 
+  @UseGuards(ClassGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'update class by id' })
   async update(
@@ -124,6 +129,7 @@ export class ClassesController {
     }
   }
 
+  @UseGuards(ClassGuard)  
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res) {
     try {
@@ -145,6 +151,7 @@ export class ClassesController {
     }
   }
 
+  @UseGuards(ClassGuard)
   @Post('/restore/:id')
   async restoreClass(@Param('id') id: string, @Res() res) {
     try {

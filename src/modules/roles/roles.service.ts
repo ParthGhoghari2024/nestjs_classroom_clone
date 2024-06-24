@@ -24,7 +24,9 @@ export class RolesService {
           id: usreId,
         },
       });
-    } catch (error) {}
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
   create(createRoleDto: CreateRoleDto) {
     return 'This action adds a new role';
@@ -34,8 +36,12 @@ export class RolesService {
     return `This action returns all roles`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
+  async findOne(id: number) {
+    return await this.rolesRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
   }
 
   update(id: number, updateRoleDto: UpdateRoleDto) {
