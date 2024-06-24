@@ -3,11 +3,12 @@ import { CreateSubmissionDto } from './dto/createSubmission.dto';
 import { UpdateSubmissionDto } from './dto/updateSubmission.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Submission } from './entities/submission.entity';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { CreateAssignmentDto } from '../assignments/dto/createAssignment.dto';
 import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { UploadSubmissionDto } from './dto/uploadSubmission.dto';
+import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
 
 @Injectable()
 export class SubmissionsService {
@@ -20,7 +21,10 @@ export class SubmissionsService {
   ) {}
 
   private readonly logger: Logger = new Logger(SubmissionsService.name);
-  async create(createSubmissionDto: CreateSubmissionDto, studentId: number) {
+  async create(
+    createSubmissionDto: CreateSubmissionDto,
+    studentId: number,
+  ): Promise<Submission> {
     const newSubmission: Submission = new Submission();
     newSubmission.classId = createSubmissionDto.classId;
     newSubmission.studentId = studentId;
@@ -29,7 +33,7 @@ export class SubmissionsService {
     return await this.submissionRepository.save(newSubmission);
   }
 
-  async findAll() {
+  async findAll(): Promise<Submission[]> {
     return await this.submissionRepository.find({
       select: {
         id: true,
@@ -47,7 +51,7 @@ export class SubmissionsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<Submission> {
     return await this.submissionRepository.findOne({
       where: {
         id: id,
@@ -72,7 +76,7 @@ export class SubmissionsService {
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
     uploadSubmissionDto: UploadSubmissionDto,
     userId: number,
-  ) {
+  ): Promise<Submission> {
     try {
       return await this.attachementsEntityService.createBulkSubmissions(
         createAttachementsEntityDtos,
@@ -84,16 +88,47 @@ export class SubmissionsService {
     }
   }
 
-  async getAttachementMetadata(attachementId: number) {
+  async getAttachementMetaBySubmssionId(
+    SubmissionId: number,
+  ): Promise<Submission> {
     try {
       // return await this.attachementsEntityService.findByAttachmentId(
       //   attachementId,
       // );
       return await this.submissionRepository.findOne({
         where: {
-          id: attachementId,
+          id: SubmissionId,
           // attachments: true,
           // attachments: true,
+          attachments: {
+            attachmentType: 'submission',
+          },
+        },
+        relations: {
+          attachments: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+  async getSubmissionMetaByUserIdSubmussionId(
+    userId: number,
+    SubmissionId: number,
+  ): Promise<Submission> {
+    try {
+      // return await this.attachementsEntityService.findByAttachmentId(
+      //   attachementId,
+      // );
+      return await this.submissionRepository.findOne({
+        where: {
+          id: SubmissionId,
+          // attachments: true,
+          // attachments: true,
+          attachments: {
+            attachmentType: 'submission',
+            userId: userId,
+          },
         },
         relations: {
           attachments: true,
@@ -104,7 +139,9 @@ export class SubmissionsService {
     }
   }
 
-  async createBulkWithAttachement(submissions: Submission) {
+  async createBulkWithAttachement(
+    submissions: Submission,
+  ): Promise<Submission> {
     try {
       return await this.submissionRepository.save(submissions);
     } catch (error) {
@@ -116,7 +153,7 @@ export class SubmissionsService {
     return `This action updates a #${id} submission`;
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<UpdateResult> {
     try {
       return await this.submissionRepository.softDelete(id);
     } catch (error) {
@@ -124,9 +161,19 @@ export class SubmissionsService {
     }
   }
 
-  async restore(id: number) {
+  async restore(id: number): Promise<UpdateResult> {
     try {
       return await this.submissionRepository.restore(id);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async getAttachementMetadataById(
+    attachementId: number,
+  ): Promise<AttachmentsEntity> {
+    try {
+      return await this.attachementsEntityService.findOne(attachementId);
     } catch (error) {
       this.logger.error(error);
     }

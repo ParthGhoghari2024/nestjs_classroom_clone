@@ -12,6 +12,7 @@ import {
   Logger,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { CreateAssignmentDto } from './dto/createAssignment.dto';
@@ -26,21 +27,28 @@ import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEn
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
+import admZip from 'adm-zip';
+
+import fs from 'fs';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Assignment } from './entities/assignment.entity';
 import { ClassesService } from '../classes/classes.service';
 import { UpdateResult } from 'typeorm';
-import { RolesEnum } from 'src/types/constants';
+import { LIMIT_ASSIGNMENT_PAGINATION, RolesEnum } from 'src/types/constants';
 import { Class } from '../classes/entities/class.entity';
 import { Request } from 'express';
 import { ValidateAssignmentOwnerGuard } from './assignments.guard';
-
+import path from 'path';
+import AdmZip from 'adm-zip';
+import mime from 'mime-type/with-db';
+import { PaginationQuery } from './dto/paginationQuery.dto';
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @ApiTags('assignment')
@@ -53,6 +61,8 @@ export class AssignmentsController {
   ) {}
 
   private readonly logger: Logger = new Logger(AssignmentsController.name);
+
+  // private readonly Mime =  Mime();
   @Post()
   @ApiOperation({ summary: 'post assignments' })
   async create(
@@ -134,41 +144,13 @@ export class AssignmentsController {
     }
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string, @Res() res: Response) {
-    try {
-      const assignment: Assignment = await this.assignmentsService.findOne(+id);
-
-      if (assignment)
-        return generalJsonResponse(res, { success: 1, result: assignment });
-      return generalJsonResponse(
-        res,
-        { success: 0 },
-        'something went wrong',
-        'error',
-        false,
-        400,
-      );
-    } catch (error) {
-      this.logger.error(error);
-      return generalJsonResponse(
-        res,
-        { success: 0 },
-        'something went wrong',
-        'error',
-        false,
-        500,
-      );
-    }
-  }
-
   @UseGuards(ValidateAssignmentOwnerGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateAssignmentDto: UpdateAssignmentDto,
     @Res() res,
-  ) {
+  ): Promise<Response> {
     try {
       const updateResult: UpdateResult = await this.assignmentsService.update(
         +id,
@@ -194,7 +176,7 @@ export class AssignmentsController {
 
   @UseGuards(ValidateAssignmentOwnerGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string, @Res() res) {
+  async remove(@Param('id') id: string, @Res() res): Promise<Response> {
     try {
       const deleteResult: UpdateResult =
         await this.assignmentsService.remove(+id);
@@ -259,7 +241,7 @@ export class AssignmentsController {
     @Body() uploadAssignmentDto: UploadAssignmentDto,
     @Res() res: Response,
     @Req() req: Request,
-  ) {
+  ): Promise<Response> {
     try {
       const userId: number = req.user.id || 1; //TODO:
 
@@ -335,7 +317,7 @@ export class AssignmentsController {
     @UploadedFiles() files,
     @Res() res: Response,
     @Req() req: Request,
-  ) {
+  ): Promise<Response> {
     try {
       const userId: number = req.user.id || 1; //TODO:
       const attachementId: number = +id;
@@ -378,10 +360,13 @@ export class AssignmentsController {
     }
   }
   @Get('/attachment/metadata/:id')
-  async getAttachementFile(@Param('id') id: string, @Res() res) {
+  async getAttachementFileMetaData(
+    @Param('id') id: string,
+    @Res() res,
+  ): Promise<Response> {
     try {
       const attachementMetaData: Assignment =
-        await this.assignmentsService.getAttachementMetadata(+id);
+        await this.assignmentsService.getAttachementMetadataByAssignmentId(+id);
 
       if (attachementMetaData)
         return generalJsonResponse(res, {
@@ -440,6 +425,167 @@ export class AssignmentsController {
     } catch (error) {
       this.logger.error(error);
       return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
+  }
+
+  @Get('/attachment/:id')
+  async getAttachementFile(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const attachementMetaData: AttachmentsEntity =
+        await this.assignmentsService.getAttachementMetadataById(+id);
+
+      const filePath: string = path.resolve(
+        path.join(attachementMetaData.path),
+      );
+
+      if (fs.existsSync(filePath)) {
+        const fileData = fs.readFileSync(filePath);
+        const fileName = `${attachementMetaData.new_filename}`;
+        const fileType = mime.lookup(filePath);
+        res.writeHead(200, {
+          'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Content-Type': fileType,
+        });
+        return res.end(fileData);
+      }
+
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        400,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
+  }
+
+  @Get('/attachment/zip/:id')
+  async getAttachementZip(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const attachementMetaData: Assignment =
+        await this.assignmentsService.getAttachementMetadataByAssignmentId(+id);
+
+      let attachementPaths: string[] = [];
+
+      if (attachementMetaData) {
+        attachementMetaData.attachments.forEach((attachement) => {
+          const filePath: string = path.resolve(path.join(attachement.path));
+
+          attachementPaths = [...attachementPaths, filePath];
+        });
+      }
+
+      let zip: AdmZip = new AdmZip();
+      attachementPaths.forEach(async (path: string) => {
+        if (fs.existsSync(path)) {
+          zip.addLocalFile(path);
+        }
+      });
+
+      let zipContent: Buffer = await zip.toBufferPromise();
+
+      const fileName: string = `assignment_${id}.zip`;
+      const fileType: string = 'application/zip';
+      res.writeHead(200, {
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Type': fileType,
+      });
+      return res.end(zipContent);
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
+  }
+
+  @Get('/pagination')
+  async findWithPagination(
+    @Query() paginationQuery: PaginationQuery,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const countOfRecords: number =
+        await this.assignmentsService.countOfRecords();
+      const offSet: number =
+        (paginationQuery.currentPage - 1) * LIMIT_ASSIGNMENT_PAGINATION;
+
+      if (offSet > countOfRecords) {
+        return generalJsonResponse(
+          res,
+          { success: 0, paginationError: 1 },
+          '',
+          'error',
+          false,
+          400,
+        );
+      }
+
+      const assignments: Assignment[] = await this.assignmentsService.findAll(
+        offSet,
+        LIMIT_ASSIGNMENT_PAGINATION,
+      );
+
+      if (assignments)
+        return generalJsonResponse(res, { success: 1, result: assignments });
+
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        400,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        500,
+      );
+    }
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const assignment: Assignment = await this.assignmentsService.findOne(+id);
+
+      if (assignment)
+        return generalJsonResponse(res, { success: 1, result: assignment });
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        400,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(
+        res,
+        { success: 0 },
+        'something went wrong',
+        'error',
+        false,
+        500,
+      );
     }
   }
 }

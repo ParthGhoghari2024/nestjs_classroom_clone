@@ -3,7 +3,12 @@ import { CreateAssignmentDto } from './dto/createAssignment.dto';
 import { UpdateAssignmentDto } from './dto/updateAssignment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assignment } from './entities/assignment.entity';
-import { NumericType, Repository } from 'typeorm';
+import {
+  FindManyOptions,
+  NumericType,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
@@ -34,7 +39,7 @@ export class AssignmentsService {
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
     uploadAssignmentDto: UploadAssignmentDto,
     userId: number,
-  ) {
+  ): Promise<Assignment> {
     try {
       return await this.attachementsEntityService.createBulkAssignements(
         createAttachementsEntityDtos,
@@ -49,7 +54,7 @@ export class AssignmentsService {
     createAttachementsEntityDtos: CreateAttachementsEntityDto[],
     assignementId: number,
     userId: number,
-  ) {
+  ): Promise<Assignment> {
     try {
       return await this.attachementsEntityService.addNewAssignementsAttachement(
         createAttachementsEntityDtos,
@@ -61,16 +66,21 @@ export class AssignmentsService {
     }
   }
 
-  async getAttachementMetadata(attachementId: number) {
+  async getAttachementMetadataByAssignmentId(
+    assignementId: number,
+  ): Promise<Assignment> {
     try {
       // return await this.attachementsEntityService.findByAttachmentId(
       //   attachementId,
       // );
       return await this.assignmentRepository.findOne({
         where: {
-          id: attachementId,
+          id: assignementId,
           // attachments: true,
           // attachments: true,
+          attachments: {
+            attachmentType: 'assignment',
+          },
         },
         select: {
           attachments: {
@@ -88,8 +98,18 @@ export class AssignmentsService {
       this.logger.error(error);
     }
   }
-  async findAll() {
-    return await this.assignmentRepository.find({
+
+  async getAttachementMetadataById(
+    attachementId: number,
+  ): Promise<AttachmentsEntity> {
+    try {
+      return await this.attachementsEntityService.findOne(attachementId);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+  async findAll(offSet: number = 0, limit: number = 0): Promise<Assignment[]> {
+    const options: FindManyOptions<Assignment> = {
       select: {
         id: true,
         // classId: true,
@@ -111,10 +131,16 @@ export class AssignmentsService {
         class: true,
         teacher: true,
       },
-    });
-  }
+      skip: offSet,
+    };
+    limit !== 0 && (options.take = limit);
 
-  async findOne(id: number) {
+    return await this.assignmentRepository.find(options);
+  }
+  async countOfRecords(): Promise<number> {
+    return await this.assignmentRepository.count();
+  }
+  async findOne(id: number): Promise<Assignment> {
     return await this.assignmentRepository.findOne({
       where: {
         id,
@@ -145,7 +171,7 @@ export class AssignmentsService {
     });
   }
 
-  async findWithRelations(id: number) {
+  async findWithRelations(id: number): Promise<Assignment> {
     return await this.assignmentRepository.findOne({
       where: {
         id,
@@ -158,15 +184,20 @@ export class AssignmentsService {
     });
   }
 
-  async update(id: number, updateAssignmentDto: UpdateAssignmentDto) {
+  async update(
+    id: number,
+    updateAssignmentDto: UpdateAssignmentDto,
+  ): Promise<UpdateResult> {
     return await this.assignmentRepository.update(id, updateAssignmentDto);
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<UpdateResult> {
     return await this.assignmentRepository.softDelete(id);
   }
 
-  async createBulkWithAttachement(assignments: Assignment) {
+  async createBulkWithAttachement(
+    assignments: Assignment,
+  ): Promise<Assignment> {
     try {
       return await this.assignmentRepository.save(assignments);
     } catch (error) {
@@ -174,7 +205,7 @@ export class AssignmentsService {
     }
   }
 
-  async saveAssignment(assignment: Assignment) {
+  async saveAssignment(assignment: Assignment): Promise<Assignment> {
     try {
       return await this.assignmentRepository.save(assignment);
     } catch (error) {
@@ -182,7 +213,7 @@ export class AssignmentsService {
     }
   }
 
-  async removeAttachement(id: number) {
+  async removeAttachement(id: number): Promise<UpdateResult> {
     try {
       return await this.attachementsEntityService.remove(id);
     } catch (error) {
@@ -190,7 +221,7 @@ export class AssignmentsService {
     }
   }
 
-  async getAttachementByAttachementId(id: number) {
+  async getAttachementByAttachementId(id: number): Promise<AttachmentsEntity> {
     try {
       return await this.attachementsEntityService.findOneWithRelations(id);
     } catch (error) {

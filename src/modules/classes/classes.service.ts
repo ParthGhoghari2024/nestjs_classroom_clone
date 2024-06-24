@@ -76,7 +76,11 @@ export class ClassesService {
               username: true,
             },
           },
-          teachers: true,
+          user: {
+            id: true,
+            email: true,
+            username: true,
+          },
           assignments: {
             title: true,
             description: true,
@@ -90,7 +94,7 @@ export class ClassesService {
         },
         relations: {
           students: true,
-          teachers: true,
+          user: true,
           assignments: {
             teacher: true,
           },
@@ -282,7 +286,7 @@ export class ClassesService {
           // ];
 
           classes = await Promise.all(
-            createTeacherAddToClass.UIds.map(async (UId) => {
+            createTeacherAddToClass.UIds.map(async (UId: string) => {
               return await this.getClassIdByUId(UId);
             }),
           );

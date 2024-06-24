@@ -165,6 +165,11 @@ export class AttachementsEntityService {
         attachmentId: id,
         attachmentType: 'assignment',
       },
+      select: {
+        path: true,
+        original_filename: true,
+        new_filename: true,
+      },
     });
   }
 

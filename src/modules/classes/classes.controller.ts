@@ -48,7 +48,7 @@ export class ClassesController {
     @Body() createClassDto: CreateClassDto,
     @Req() req: Request,
     @Res() res: Response,
-  ) {
+  ): Promise<Response> {
     try {
       const userId: number = req.user.id;
       const userRole: string = req.user.role;
@@ -84,8 +84,18 @@ export class ClassesController {
   }
 
   @Get()
-  async findAll() {
-    return await this.classesService.findAll();
+  async findAll(@Res() res: Response): Promise<Response> {
+    try {
+      const classes: Class[] = await this.classesService.findAll();
+
+      if (classes)
+        return generalJsonResponse(res, { success: 1, result: classes });
+
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 400);
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @Get(':id')
@@ -95,8 +105,18 @@ export class ClassesController {
     description: 'Found class data',
     type: Class,
   })
-  async findOne(@Param('id') id: string) {
-    return await this.classesService.findOne(+id);
+  async findOne(@Param('id') id: string, @Res() res): Promise<Response> {
+    try {
+      const classEntity: Class = await this.classesService.findOne(+id);
+
+      if (classEntity)
+        return generalJsonResponse(res, { success: 1, result: classEntity });
+
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 400);
+    } catch (error) {
+      this.logger.error(error);
+      return generalJsonResponse(res, { success: 0 }, '', 'error', false, 500);
+    }
   }
 
   @UseGuards(ClassGuard)
@@ -106,7 +126,7 @@ export class ClassesController {
     @Param('id') id: string,
     @Body() updateClassDto: UpdateClassDto,
     @Res() res: Response,
-  ) {
+  ): Promise<Response> {
     try {
       const updateResult: UpdateResult = await this.classesService.update(
         +id,
@@ -129,9 +149,9 @@ export class ClassesController {
     }
   }
 
-  @UseGuards(ClassGuard)  
+  @UseGuards(ClassGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string, @Res() res) {
+  async remove(@Param('id') id: string, @Res() res): Promise<Response> {
     try {
       const deleteResult: Class = await this.classesService.remove(+id);
 
@@ -153,7 +173,7 @@ export class ClassesController {
 
   @UseGuards(ClassGuard)
   @Post('/restore/:id')
-  async restoreClass(@Param('id') id: string, @Res() res) {
+  async restoreClass(@Param('id') id: string, @Res() res): Promise<Response> {
     try {
       const classId: number = Number(id);
       const restoreResult: Class = await this.classesService.restore(classId);
@@ -167,7 +187,11 @@ export class ClassesController {
   }
 
   @Post('/teacher/:id')
-  async addTeacherToClass(@Param('id') id: string, @Res() res, @Req() req) {
+  async addTeacherToClass(
+    @Param('id') id: string,
+    @Res() res,
+    @Req() req,
+  ): Promise<Response> {
     try {
       const classId: number = Number(id);
       const userId: number = req.user.id || 1; //TODO:
@@ -193,7 +217,11 @@ export class ClassesController {
   }
 
   @Post('/student/:id')
-  async addStudentToClass(@Param('id') id: string, @Res() res, @Req() req) {
+  async addStudentToClass(
+    @Param('id') id: string,
+    @Res() res,
+    @Req() req,
+  ): Promise<Response> {
     try {
       const classId: number = Number(id);
       const userId: number = req.user.id || 1; //TODO:
@@ -224,7 +252,7 @@ export class ClassesController {
     @Body() addClassWithAssignments: AddClassWithAssignments,
     @Res() res: Response,
     @Req() req: Request,
-  ) {
+  ): Promise<Response> {
     try {
       const userId: number = req.user.id || 1;
       const createResult: Class =

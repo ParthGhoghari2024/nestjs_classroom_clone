@@ -12,6 +12,7 @@ import { TeacherClassesModule } from './modules/teacherClass/teacherClasses.modu
 import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AttachementsEntityModule } from './modules/attachementsEntity/attachementsEntity.module';
+import { SocketEventsModule } from './modules/socketEvents/socketEvents.module';
 ConfigModule.forRoot({
   isGlobal: true,
 });
@@ -35,6 +36,7 @@ ConfigModule.forRoot({
     RolesModule,
     TeacherClassesModule,
     UsersModule,
+    SocketEventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
