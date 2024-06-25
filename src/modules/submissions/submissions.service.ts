@@ -26,7 +26,7 @@ export class SubmissionsService {
     studentId: number,
   ): Promise<Submission> {
     const newSubmission: Submission = new Submission();
-    newSubmission.classId = createSubmissionDto.classId;
+    newSubmission.assignmentId = createSubmissionDto.assignmentId;
     newSubmission.studentId = studentId;
     newSubmission.submission = createSubmissionDto.submission;
 
@@ -173,7 +173,9 @@ export class SubmissionsService {
     attachementId: number,
   ): Promise<AttachmentsEntity> {
     try {
-      return await this.attachementsEntityService.findOne(attachementId);
+      return await this.attachementsEntityService.findOneSubmission(
+        attachementId,
+      );
     } catch (error) {
       this.logger.error(error);
     }

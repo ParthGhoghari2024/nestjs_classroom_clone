@@ -11,7 +11,7 @@ export class UploadSubmissionDto {
     example: 1,
     required: true,
   })
-  public classId: number;
+  public assignmentId: number;
 
   @ApiProperty({
     example:

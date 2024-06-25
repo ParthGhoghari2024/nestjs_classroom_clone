@@ -58,9 +58,4 @@ export class Class {
     cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
   })
   teachers: TeacherClasses[];
-
-  @OneToMany(() => Submission, (submission) => submission.class, {
-    cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
-  })
-  submissions: Submission[];
 }

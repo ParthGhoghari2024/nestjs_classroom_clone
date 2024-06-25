@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/createSubmission.dto';
@@ -31,12 +32,18 @@ import path from 'path';
 import AdmZip from 'adm-zip';
 import mime from 'mime-type/with-db';
 import fs from 'fs';
+import { AssignmentsService } from '../assignments/assignments.service';
+import { Assignment } from '../assignments/entities/assignment.entity';
 @ApiBearerAuth()
 @ApiTags('submissions')
 @UseGuards(AuthGuard)
 @Controller('submissions')
 export class SubmissionsController {
-  constructor(private readonly submissionsService: SubmissionsService) {}
+  constructor(
+    private readonly submissionsService: SubmissionsService,
+
+    private readonly assignmentService: AssignmentsService,
+  ) {}
 
   private readonly logger = new Logger(SubmissionsService.name);
 
@@ -44,9 +51,25 @@ export class SubmissionsController {
   async create(
     @Body() createSubmissionDto: CreateSubmissionDto,
     @Res() res,
+    @Req() req,
   ): Promise<Response> {
     try {
-      const studentId: number = 1; //TODO:
+      const studentId: number = req.user.id; //TODO:
+
+      const assignmentExists: Assignment = await this.assignmentService.findOne(
+        createSubmissionDto.assignmentId,
+      );
+
+      if (!assignmentExists) {
+        return generalJsonResponse(
+          res,
+          { success: 0, assignmentIdError: 1 },
+          '',
+          'error',
+          false,
+          403,
+        );
+      }
       const createResult: Submission = await this.submissionsService.create(
         createSubmissionDto,
         studentId,
@@ -112,13 +135,32 @@ export class SubmissionsController {
     }
   }
 
-  // @Patch(':id')
-  // async update(
-  //   @Param('id') id: string,
-  //   @Body() updateSubmissionDto: UpdateSubmissionDto,
-  // ) {
-  //   return await this.submissionsService.update(+id, updateSubmissionDto);
-  // }
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateSubmissionDto: UpdateSubmissionDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const userId: number = req.user.id;
+    const submission: Submission = await this.submissionsService.findOne(+id);
+
+    if (!submission || !submission.student.id) {
+      return generalJsonResponse(
+        res,
+        { success: 0, idError: 1 },
+        '',
+        'error',
+        false,
+        403,
+      );
+    }
+
+    if (submission.studentId !== userId) {
+      return new UnauthorizedException();
+    }
+    return await this.submissionsService.update(+id, updateSubmissionDto);
+  }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res): Promise<Response> {
@@ -168,7 +210,7 @@ export class SubmissionsController {
     schema: {
       type: 'object',
       properties: {
-        classId: {
+        assignmentId: {
           type: 'number',
         },
         submission: {

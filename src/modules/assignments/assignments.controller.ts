@@ -21,13 +21,10 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from 'src/utils/multerOptions.utils';
 import { CreateAttachementsEntityDto } from '../attachementsEntity/dto/createAttachementsEntity.dto';
 import { UploadAssignmentDto } from './dto/uploadAssignment.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { AttachementsEntityService } from '../attachementsEntity/attachementsEntity.service';
 import { AttachmentsEntity } from '../attachementsEntity/entities/attachementsEntity.entity';
 import generalJsonResponse from 'src/helper/generalResponse.helper';
 import { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
-import admZip from 'adm-zip';
 
 import fs from 'fs';
 import {
@@ -35,7 +32,6 @@ import {
   ApiBody,
   ApiConsumes,
   ApiOperation,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Assignment } from './entities/assignment.entity';
@@ -62,7 +58,6 @@ export class AssignmentsController {
 
   private readonly logger: Logger = new Logger(AssignmentsController.name);
 
-  // private readonly Mime =  Mime();
   @Post()
   @ApiOperation({ summary: 'post assignments' })
   async create(
@@ -535,7 +530,11 @@ export class AssignmentsController {
       );
 
       if (assignments)
-        return generalJsonResponse(res, { success: 1, result: assignments });
+        return generalJsonResponse(res, {
+          success: 1,
+          result: assignments,
+          totalPages: Math.ceil(countOfRecords / LIMIT_ASSIGNMENT_PAGINATION),
+        });
 
       return generalJsonResponse(
         res,

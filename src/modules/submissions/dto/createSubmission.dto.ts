@@ -7,7 +7,7 @@ export class CreateSubmissionDto {
     required: true,
   })
   @IsNumber()
-  public classId: number;
+  public assignmentId: number;
 
   @ApiProperty({
     example:

@@ -1,3 +1,4 @@
+import { Assignment } from 'src/modules/assignments/entities/assignment.entity';
 import { AttachmentsEntity } from 'src/modules/attachementsEntity/entities/attachementsEntity.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
 import { User } from 'src/modules/users/entities/user.entity';
@@ -24,7 +25,7 @@ export class Submission {
   studentId: number;
 
   @Column()
-  classId: number;
+  assignmentId: number;
 
   @Column({ type: 'text' })
   submission: string;
@@ -49,7 +50,7 @@ export class Submission {
   )
   attachments: AttachmentsEntity[];
 
-  @ManyToOne(() => Class, (classEntity) => classEntity.submissions)
-  @JoinColumn({ name: 'classId' })
-  class: Class;
+  @ManyToOne(() => Assignment, (assignment) => assignment.submissions)
+  @JoinColumn({ name: 'assignmentId' })
+  assignment: Assignment;
 }

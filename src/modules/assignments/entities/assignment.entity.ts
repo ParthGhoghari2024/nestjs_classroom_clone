@@ -1,11 +1,13 @@
 import { AttachmentsEntity } from 'src/modules/attachementsEntity/entities/attachementsEntity.entity';
 import { Class } from 'src/modules/classes/entities/class.entity';
+import { Submission } from 'src/modules/submissions/entities/submission.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToOne,
   OneToMany,
@@ -35,12 +37,17 @@ export class Assignment {
   dueDate: Date;
 
   @ManyToOne(() => Class, (classModel) => classModel.assignments)
-  @JoinTable({ name: 'classId' })
+  @JoinColumn({ name: 'classId' })
   class: Class;
 
   @ManyToOne(() => User, (user) => user.assignments)
-  @JoinTable({ name: 'teacherId' })
+  @JoinColumn({ name: 'teacherId' })
   teacher: User;
+
+  @OneToMany(() => Submission, (submission) => submission.assignment, {
+    cascade: ['insert', 'update', 'remove', 'soft-remove', 'recover'],
+  })
+  submissions: Submission[];
 
   @OneToMany(
     () => AttachmentsEntity,

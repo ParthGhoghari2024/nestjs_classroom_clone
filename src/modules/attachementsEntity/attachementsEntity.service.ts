@@ -112,7 +112,7 @@ export class AttachementsEntityService {
     try {
       const createSubmissionDto: CreateSubmissionDto =
         new CreateSubmissionDto();
-      createSubmissionDto.classId = uploadSubmissionDto.classId;
+      createSubmissionDto.assignmentId = uploadSubmissionDto.assignmentId; //TODO:
       createSubmissionDto.submission = uploadSubmissionDto.submission;
 
       const submission: Submission = await this.submissionsService.create(
@@ -164,6 +164,20 @@ export class AttachementsEntityService {
       where: {
         attachmentId: id,
         attachmentType: 'assignment',
+      },
+      select: {
+        path: true,
+        original_filename: true,
+        new_filename: true,
+      },
+    });
+  }
+
+  async findOneSubmission(id: number) {
+    return await this.attachementsService.findOne({
+      where: {
+        attachmentId: id,
+        attachmentType: 'submission',
       },
       select: {
         path: true,
